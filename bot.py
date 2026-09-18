@@ -10,7 +10,7 @@ intents.members = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 # ئایدی کەناڵی بەخێرهاتن
-WELCOME_CHANNEL_ID = 1550619956423688342 
+WELCOME_CHANNEL_ID = 1550616272805568613 
 
 
 @bot.event
@@ -33,13 +33,13 @@ async def on_member_join(member):
         except Exception as e:
             print(f"کێشە لە دانی ڕۆڵ ڕوویدا: {e}")
 
-    # ناردنی گیف و نامەی بەخێرهاتن لەو کەناڵەی کە دیاریت کردووە
+    # ناردنی گیف و نامەی بەخێرهاتن بە دەقی نوێ
     channel = bot.get_channel(WELCOME_CHANNEL_ID)
     if channel:
         try:
             file = discord.File("welcome.gif", filename="welcome.gif")
             await channel.send(
-                content=f"بەخێر بێیت {member.mention}! ✨",
+                content=f"Welcome to Friends {member.mention}! ✨",
                 file=file
             )
         except Exception as e:
