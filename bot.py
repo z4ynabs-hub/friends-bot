@@ -1,6 +1,7 @@
 import os
 import discord
 from discord.ext import commands
+import datetime
 
 # ١. دەسەڵاتەکانی بۆتەکە
 intents = discord.Intents.default()
@@ -23,7 +24,6 @@ async def on_ready():
 # ---------------------------------------------------------
 @bot.event
 async def on_member_join(member):
-    # دانی ڕۆڵی Friends بە ئەندامی نوێ
     role_name = "Friends"  
     role = discord.utils.get(member.guild.roles, name=role_name)
     
@@ -33,7 +33,6 @@ async def on_member_join(member):
         except Exception as e:
             print(f"کێشە لە دانی ڕۆڵ ڕوویدا: {e}")
 
-    # ناردنی گیف و نامەی بەخێرهاتن بە دەقی نوێی ئینگلیزی
     channel = bot.get_channel(WELCOME_CHANNEL_ID)
     if channel:
         try:
@@ -47,7 +46,7 @@ async def on_member_join(member):
 
 
 # ---------------------------------------------------------
-# ٣. کۆماندەکان (Ban, Unban, Lock, Unlock)
+# ٣. کۆماندەکان (Clear, Mute, Unmute, Ban, Unban, Lock, Unlock)
 # ---------------------------------------------------------
 @bot.event
 async def on_message(message):
@@ -59,6 +58,55 @@ async def on_message(message):
         return
 
     command = msg[0].lower()
+
+    # --- (!clear 10) ---
+    if command == "!clear" and len(msg) == 2 and msg[1].isdigit():
+        if not message.author.guild_permissions.manage_messages:
+            await message.channel.send(f"❌ {message.author.mention} تۆ ڕۆڵت نییە!", delete_after=6)
+            return
+
+        amount = int(msg[1]) + 1
+        await message.channel.purge(limit=amount)
+        await message.channel.send(f"✅ {msg[1]} پەیام سڕێنرانەوە.", delete_after=3)
+        return
+
+    # --- (!mute) ---
+    if command == "!mute":
+        if not message.author.guild_permissions.moderate_members:
+            await message.channel.send(f"❌ {message.author.mention} تۆ ڕۆڵت نییە!", delete_after=6)
+            return
+
+        target_member = None
+        if message.mentions:
+            target_member = message.mentions[0]
+        elif message.reference:
+            referenced_msg = await message.channel.fetch_message(message.reference.message_id)
+            target_member = referenced_msg.author
+
+        if target_member:
+            await target_member.timeout(datetime.timedelta(minutes=10), reason="Muted by command")
+            await message.channel.send(f"🤐 {target_member.mention} میوت کرا.", delete_after=5)
+            await message.delete()
+        return
+
+    # --- (!unmute) ---
+    if command == "!unmute":
+        if not message.author.guild_permissions.moderate_members:
+            await message.channel.send(f"❌ {message.author.mention} تۆ ڕۆڵت نییە!", delete_after=6)
+            return
+
+        target_member = None
+        if message.mentions:
+            target_member = message.mentions[0]
+        elif message.reference:
+            referenced_msg = await message.channel.fetch_message(message.reference.message_id)
+            target_member = referenced_msg.author
+
+        if target_member:
+            await target_member.timeout(None, reason="Unmuted by command")
+            await message.channel.send(f"🔊 لەسەر {target_member.mention} میوت لادرا.", delete_after=5)
+            await message.delete()
+        return
 
     # --- (!ban) ---
     if command == "!ban":
@@ -94,7 +142,7 @@ async def on_message(message):
             await message.channel.send(f"⚠️ هەڵەیەک ڕوویدا یان ئایدیەکە هەڵەیە.", delete_after=5)
         return
 
-    # --- (!lock) داخستنی کەناڵ ---
+    # --- (!lock) ---
     if command == "!lock":
         if not message.author.guild_permissions.manage_channels:
             await message.channel.send(f"❌ {message.author.mention} تۆ ڕۆڵت نییە!", delete_after=6)
@@ -104,7 +152,7 @@ async def on_message(message):
         await message.channel.send("🔒 کەناڵەکە داخرا (Locked).")
         return
 
-    # --- (!unlock) کردنەوەی کەناڵ ---
+    # --- (!unlock) ---
     if command == "!unlock":
         if not message.author.guild_permissions.manage_channels:
             await message.channel.send(f"❌ {message.author.mention} تۆ ڕۆڵت نییە!", delete_after=6)
