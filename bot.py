@@ -115,6 +115,4 @@ async def on_message(message):
             await message.delete()
         return
 
-    await bot.process_commands(message)
-   # تۆکنی نوێکراوەی بۆتەکەت لێرە بپێستە
-bot.run("MTU1MDU0NDM2NTkxNzcwNDMzMg.GuwOYQ.gdtygIBd3h9tzTLiXCCIOqVRf1pXQHWRhbYBU4") 
+   bot.run(os.getenv("DISCORD_TOKEN"))
