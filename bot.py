@@ -46,21 +46,30 @@ async def on_member_join(member):
 
 
 # ---------------------------------------------------------
-# ٣. کۆماندەکان (Clear, Mute, Unmute, Ban, Unban, Lock, Unlock)
+# ٣. کۆماندەکان (ئێستا بە `!` و بە بێ `!`ـیش کار دەکەن)
 # ---------------------------------------------------------
 @bot.event
 async def on_message(message):
     if message.author.bot:
         return
 
-    msg = message.content.strip().split()
+    content = message.content.strip()
+    if not content:
+        return
+
+    # لادانی پێشگری ! ئەگەر هەبێت یان نەبێت بۆ ئەوەی بە ئاسانی کار بکات
+    if content.startswith("!"):
+        msg = content[1:].strip().split()
+    else:
+        msg = content.split()
+
     if not msg:
         return
 
     command = msg[0].lower()
 
-    # --- (!clear 10) ---
-    if command == "!clear" and len(msg) == 2 and msg[1].isdigit():
+    # --- (clear 10) ---
+    if command == "clear" and len(msg) == 2 and msg[1].isdigit():
         if not message.author.guild_permissions.manage_messages:
             await message.channel.send(f"❌ {message.author.mention} تۆ ڕۆڵت نییە!", delete_after=6)
             return
@@ -70,8 +79,8 @@ async def on_message(message):
         await message.channel.send(f"✅ {msg[1]} پەیام سڕێنرانەوە.", delete_after=3)
         return
 
-    # --- (!mute) ---
-    if command == "!mute":
+    # --- (mute) ---
+    if command == "mute":
         if not message.author.guild_permissions.moderate_members:
             await message.channel.send(f"❌ {message.author.mention} تۆ ڕۆڵت نییە!", delete_after=6)
             return
@@ -89,8 +98,8 @@ async def on_message(message):
             await message.delete()
         return
 
-    # --- (!unmute) ---
-    if command == "!unmute":
+    # --- (unmute) ---
+    if command == "unmute":
         if not message.author.guild_permissions.moderate_members:
             await message.channel.send(f"❌ {message.author.mention} تۆ ڕۆڵت نییە!", delete_after=6)
             return
@@ -108,8 +117,8 @@ async def on_message(message):
             await message.delete()
         return
 
-    # --- (!ban) ---
-    if command == "!ban":
+    # --- (ban) ---
+    if command == "ban":
         if not message.author.guild_permissions.ban_members:
             await message.channel.send(f"❌ {message.author.mention} تۆ ڕۆڵت نییە!", delete_after=6)
             return
@@ -127,8 +136,8 @@ async def on_message(message):
             await message.delete()
         return
 
-    # --- (!unban) ---
-    if command == "!unban" and len(msg) == 2:
+    # --- (unban) ---
+    if command == "unban" and len(msg) == 2:
         if not message.author.guild_permissions.ban_members:
             await message.channel.send(f"❌ {message.author.mention} تۆ ڕۆڵت نییە!", delete_after=6)
             return
@@ -142,8 +151,8 @@ async def on_message(message):
             await message.channel.send(f"⚠️ هەڵەیەک ڕوویدا یان ئایدیەکە هەڵەیە.", delete_after=5)
         return
 
-    # --- (!lock) ---
-    if command == "!lock":
+    # --- (lock) ---
+    if command == "lock":
         if not message.author.guild_permissions.manage_channels:
             await message.channel.send(f"❌ {message.author.mention} تۆ ڕۆڵت نییە!", delete_after=6)
             return
@@ -152,8 +161,8 @@ async def on_message(message):
         await message.channel.send("🔒 کەناڵەکە داخرا (Locked).")
         return
 
-    # --- (!unlock) ---
-    if command == "!unlock":
+    # --- (unlock) ---
+    if command == "unlock":
         if not message.author.guild_permissions.manage_channels:
             await message.channel.send(f"❌ {message.author.mention} تۆ ڕۆڵت نییە!", delete_after=6)
             return
