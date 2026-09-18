@@ -8,10 +8,10 @@ intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
 
-bot = commands.Bot(command_prefix="", intents=intents)
+bot = commands.Bot(command_prefix="!", intents=intents)
 
 # ئایدی کەناڵی چاتی گشتی (تەنها ژمارەکە بەبێ لینک)
-WELCOME_CHANNEL_ID = 1448989203508629544 
+WELCOME_CHANNEL_ID = 1474400690515480777 
 
 
 @bot.event
@@ -37,7 +37,7 @@ async def on_member_join(member):
 
 
 # ---------------------------------------------------------
-# ٣. کۆماندەکان (Shetika, Mute, Ban) بە Replay یان Tag
+# ٣. کۆماندەکان (Clear, Mute, Unmute, Ban, Unban, Lock, Unlock)
 # ---------------------------------------------------------
 @bot.event
 async def on_message(message):
@@ -50,13 +50,10 @@ async def on_message(message):
 
     command = msg[0].lower()
 
-    # --- (shetika 100) ---
-    if command == "shetika" and len(msg) == 2 and msg[1].isdigit():
+    # --- (!clear 10) سڕینەوەی نامەکان ---
+    if command == "!clear" and len(msg) == 2 and msg[1].isdigit():
         if not message.author.guild_permissions.manage_messages:
-            await message.channel.send(
-                f"❌ {message.author.mention} تۆ ڕۆڵت نییە! بڕۆ بە ئاڤلۆ بڵێ.",
-                delete_after=6
-            )
+            await message.channel.send(f"❌ {message.author.mention} تۆ ڕۆڵت نییە!", delete_after=6)
             return
 
         amount = int(msg[1]) + 1
@@ -64,13 +61,10 @@ async def on_message(message):
         await message.channel.send(f"✅ {msg[1]} پەیام سڕێنرانەوە.", delete_after=3)
         return
 
-    # --- (mute بە ڕەیپڵای یان تاگ) ---
-    if command == "mute":
+    # --- (!mute) ---
+    if command == "!mute":
         if not message.author.guild_permissions.moderate_members:
-            await message.channel.send(
-                f"❌ {message.author.mention} تۆ ڕۆڵت نییە تا کەس میوت بکەیت! بڕۆ بە ئاڤلۆ بڵێ.",
-                delete_after=6
-            )
+            await message.channel.send(f"❌ {message.author.mention} تۆ ڕۆڵت نییە!", delete_after=6)
             return
 
         target_member = None
@@ -81,22 +75,15 @@ async def on_message(message):
             target_member = referenced_msg.author
 
         if target_member:
-            if target_member.top_role >= message.author.top_role:
-                await message.channel.send(f"⚠️ ناتوانیت ئەم کەسە میوت بکەیت!", delete_after=5)
-                return
-
             await target_member.timeout(datetime.timedelta(minutes=10), reason="Muted by command")
-            await message.channel.send(f"🤐 {target_member.mention} بۆ ماوەی ۱۰ خولەک میوت کرا.", delete_after=5)
+            await message.channel.send(f"🤐 {target_member.mention} میوت کرا.", delete_after=5)
             await message.delete()
         return
 
-    # --- (ban بە ڕەیپڵای یان تاگ) ---
-    if command == "ban":
-        if not message.author.guild_permissions.ban_members:
-            await message.channel.send(
-                f"❌ {message.author.mention} تۆ ڕۆڵی بانت نییە! بڕۆ بە ئاڤلۆ بڵێ.",
-                delete_after=6
-            )
+    # --- (!unmute) ---
+    if command == "!unmute":
+        if not message.author.guild_permissions.moderate_members:
+            await message.channel.send(f"❌ {message.author.mention} تۆ ڕۆڵت نییە!", delete_after=6)
             return
 
         target_member = None
@@ -107,12 +94,65 @@ async def on_message(message):
             target_member = referenced_msg.author
 
         if target_member:
-            if target_member.top_role >= message.author.top_role:
-                await message.channel.send(f"⚠️ ناتوانیت ئەم کەسە بان بکەیت!", delete_after=5)
-                return
-
-            await target_member.ban(reason="Banned by command")
-            await message.channel.send(f"🔨 {target_member.mention} بان کرا لە سێرڤەر.", delete_after=5)
+            await target_member.timeout(None, reason="Unmuted by command")
+            await message.channel.send(f"🔊 لەسەر {target_member.mention} میوت لادرا.", delete_after=5)
             await message.delete()
         return
+
+    # --- (!ban) ---
+    if command == "!ban":
+        if not message.author.guild_permissions.ban_members:
+            await message.channel.send(f"❌ {message.author.mention} تۆ ڕۆڵت نییە!", delete_after=6)
+            return
+
+        target_member = None
+        if message.mentions:
+            target_member = message.mentions[0]
+        elif message.reference:
+            referenced_msg = await message.channel.fetch_message(message.reference.message_id)
+            target_member = referenced_msg.author
+
+        if target_member:
+            await target_member.ban(reason="Banned by command")
+            await message.channel.send(f"🔨 {target_member.mention} بان کرا.", delete_after=5)
+            await message.delete()
+        return
+
+    # --- (!unban) ---
+    if command == "!unban" and len(msg) == 2:
+        if not message.author.guild_permissions.ban_members:
+            await message.channel.send(f"❌ {message.author.mention} تۆ ڕۆڵت نییە!", delete_after=6)
+            return
+
+        try:
+            user_id = int(msg[1])
+            user = await bot.fetch_user(user_id)
+            await message.guild.unban(user)
+            await message.channel.send(f"🔓 بە سەرکەوتوویی بانی لەسەر لادرا.", delete_after=5)
+        except Exception as e:
+            await message.channel.send(f"⚠️ هەڵەیەک ڕوویدا یان ئایدیەکە هەڵەیە.", delete_after=5)
+        return
+
+    # --- (!lock) داخستنی کەناڵ ---
+    if command == "!lock":
+        if not message.author.guild_permissions.manage_channels:
+            await message.channel.send(f"❌ {message.author.mention} تۆ ڕۆڵت نییە!", delete_after=6)
+            return
+
+        await message.channel.set_permissions(message.guild.default_role, send_messages=False)
+        await message.channel.send("🔒 کەناڵەکە داخرا (Locked).")
+        return
+
+    # --- (!unlock) کردنەوەی کەناڵ ---
+    if command == "!unlock":
+        if not message.author.guild_permissions.manage_channels:
+            await message.channel.send(f"❌ {message.author.mention} تۆ ڕۆڵت نییە!", delete_after=6)
+            return
+
+        await message.channel.set_permissions(message.guild.default_role, send_messages=True)
+        await message.channel.send("🔓 کەناڵەکە کرایەوە (Unlocked).")
+        return
+
+    await bot.process_commands(message)
+
 bot.run(os.getenv("DISCORD_TOKEN"))
