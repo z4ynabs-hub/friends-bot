@@ -46,7 +46,7 @@ async def on_member_join(member):
 
 
 # ---------------------------------------------------------
-# ٣. کۆماندەکان (ئێستا بە `!` و بە بێ `!`ـیش کار دەکەن)
+# ٣. کۆماندەکان (Clear, Mute, Unmute, Ban, Unban, Lock, Unlock)
 # ---------------------------------------------------------
 @bot.event
 async def on_message(message):
@@ -57,7 +57,6 @@ async def on_message(message):
     if not content:
         return
 
-    # لادانی پێشگری ! ئەگەر هەبێت یان نەبێت بۆ ئەوەی بە ئاسانی کار بکات
     if content.startswith("!"):
         msg = content[1:].strip().split()
     else:
@@ -68,23 +67,14 @@ async def on_message(message):
 
     command = msg[0].lower()
 
-    # --- (clear 10) ---
+    # --- clear ---
     if command == "clear" and len(msg) == 2 and msg[1].isdigit():
-        if not message.author.guild_permissions.manage_messages:
-            await message.channel.send(f"❌ {message.author.mention} تۆ ڕۆڵت نییە!", delete_after=6)
-            return
-
         amount = int(msg[1]) + 1
         await message.channel.purge(limit=amount)
-        await message.channel.send(f"✅ {msg[1]} پەیام سڕێنرانەوە.", delete_after=3)
         return
 
-    # --- (mute) ---
+    # --- mute ---
     if command == "mute":
-        if not message.author.guild_permissions.moderate_members:
-            await message.channel.send(f"❌ {message.author.mention} تۆ ڕۆڵت نییە!", delete_after=6)
-            return
-
         target_member = None
         if message.mentions:
             target_member = message.mentions[0]
@@ -93,17 +83,16 @@ async def on_message(message):
             target_member = referenced_msg.author
 
         if target_member:
-            await target_member.timeout(datetime.timedelta(minutes=10), reason="Muted by command")
-            await message.channel.send(f"🤐 {target_member.mention} میوت کرا.", delete_after=5)
-            await message.delete()
+            try:
+                await target_member.timeout(datetime.timedelta(minutes=10), reason="Muted by command")
+                await message.channel.send(f"🤐 {target_member.mention} میوت کرا.", delete_after=5)
+                await message.delete()
+            except Exception as e:
+                await message.channel.send(f"⚠️ هەڵە ڕوویدا: {e}", delete_after=5)
         return
 
-    # --- (unmute) ---
+    # --- unmute ---
     if command == "unmute":
-        if not message.author.guild_permissions.moderate_members:
-            await message.channel.send(f"❌ {message.author.mention} تۆ ڕۆڵت نییە!", delete_after=6)
-            return
-
         target_member = None
         if message.mentions:
             target_member = message.mentions[0]
@@ -112,17 +101,16 @@ async def on_message(message):
             target_member = referenced_msg.author
 
         if target_member:
-            await target_member.timeout(None, reason="Unmuted by command")
-            await message.channel.send(f"🔊 لەسەر {target_member.mention} میوت لادرا.", delete_after=5)
-            await message.delete()
+            try:
+                await target_member.timeout(None, reason="Unmuted by command")
+                await message.channel.send(f"🔊 لەسەر {target_member.mention} میوت لادرا.", delete_after=5)
+                await message.delete()
+            except Exception as e:
+                await message.channel.send(f"⚠️ هەڵە ڕوویدا: {e}", delete_after=5)
         return
 
-    # --- (ban) ---
+    # --- ban ---
     if command == "ban":
-        if not message.author.guild_permissions.ban_members:
-            await message.channel.send(f"❌ {message.author.mention} تۆ ڕۆڵت نییە!", delete_after=6)
-            return
-
         target_member = None
         if message.mentions:
             target_member = message.mentions[0]
@@ -131,44 +119,41 @@ async def on_message(message):
             target_member = referenced_msg.author
 
         if target_member:
-            await target_member.ban(reason="Banned by command")
-            await message.channel.send(f"🔨 {target_member.mention} بان کرا.", delete_after=5)
-            await message.delete()
+            try:
+                await target_member.ban(reason="Banned by command")
+                await message.channel.send(f"🔨 {target_member.mention} بان کرا.", delete_after=5)
+                await message.delete()
+            except Exception as e:
+                await message.channel.send(f"⚠️ هەڵە ڕوویدا: {e}", delete_after=5)
         return
 
-    # --- (unban) ---
+    # --- unban ---
     if command == "unban" and len(msg) == 2:
-        if not message.author.guild_permissions.ban_members:
-            await message.channel.send(f"❌ {message.author.mention} تۆ ڕۆڵت نییە!", delete_after=6)
-            return
-
         try:
             user_id = int(msg[1])
             user = await bot.fetch_user(user_id)
             await message.guild.unban(user)
             await message.channel.send(f"🔓 بە سەرکەوتوویی بانی لەسەر لادرا.", delete_after=5)
         except Exception as e:
-            await message.channel.send(f"⚠️ هەڵەیەک ڕوویدا یان ئایدیەکە هەڵەیە.", delete_after=5)
+            await message.channel.send(f"⚠️ ئایدیەکە هەڵەیە یان بانی نەکراوە.", delete_after=5)
         return
 
-    # --- (lock) ---
+    # --- lock (داخستنی کەناڵ) ---
     if command == "lock":
-        if not message.author.guild_permissions.manage_channels:
-            await message.channel.send(f"❌ {message.author.mention} تۆ ڕۆڵت نییە!", delete_after=6)
-            return
-
-        await message.channel.set_permissions(message.guild.default_role, send_messages=False)
-        await message.channel.send("🔒 کەناڵەکە داخرا (Locked).")
+        try:
+            await message.channel.set_permissions(message.guild.default_role, send_messages=False)
+            await message.channel.send("🔒 کەناڵەکە داخرا (Locked).")
+        except Exception as e:
+            await message.channel.send(f"⚠️ هەڵە ڕوویدا: {e}", delete_after=5)
         return
 
-    # --- (unlock) ---
+    # --- unlock (کردنەوەی کەناڵ) ---
     if command == "unlock":
-        if not message.author.guild_permissions.manage_channels:
-            await message.channel.send(f"❌ {message.author.mention} تۆ ڕۆڵت نییە!", delete_after=6)
-            return
-
-        await message.channel.set_permissions(message.guild.default_role, send_messages=True)
-        await message.channel.send("🔓 کەناڵەکە کرایەوە (Unlocked).")
+        try:
+            await message.channel.set_permissions(message.guild.default_role, send_messages=True)
+            await message.channel.send("🔓 کەناڵەکە کرایەوە (Unlocked).")
+        except Exception as e:
+            await message.channel.send(f"⚠️ هەڵە ڕوویدا: {e}", delete_after=5)
         return
 
     await bot.process_commands(message)
