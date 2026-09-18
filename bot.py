@@ -11,7 +11,7 @@ intents.members = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 # ئایدی کەناڵی بەخێرهاتن
-WELCOME_CHANNEL_ID = 1550616272805568613 
+WELCOME_CHANNEL_ID = 1550619956423688342 
 
 
 @bot.event
