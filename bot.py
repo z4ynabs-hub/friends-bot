@@ -20,10 +20,11 @@ async def on_ready():
 
 
 # ---------------------------------------------------------
-# ٢. سیستەمی بەخێرهاتن و دانی ڕۆڵی Friends بە شێوەی ئۆتۆماتیکی
+# ٢. سیستەمی بەخێرهاتن (لەگەڵ فەرمانی تاقیکردنەوەی !test)
 # ---------------------------------------------------------
 @bot.event
 async def on_member_join(member):
+    print(f"ئەندامێکی نوێ هات: {member.name}")
     role_name = "Friends"  
     role = discord.utils.get(member.guild.roles, name=role_name)
     
@@ -43,10 +44,12 @@ async def on_member_join(member):
             )
         except Exception as e:
             print(f"کێشەیەک لە بەخێرهاتن ڕوویدا: {e}")
+    else:
+        print("کەناڵی بەخێرهاتن نەدۆزرایەوە، دڵنیابە لە ئایدییەکەی!")
 
 
 # ---------------------------------------------------------
-# ٣. کۆماندەکان (Clear, Mute, Unmute, Ban, Unban, Lock, Unlock)
+# ٣. کۆماندەکان (Clear, Mute, Ban, Lock, Welcome Test)
 # ---------------------------------------------------------
 @bot.event
 async def on_message(message):
@@ -66,6 +69,19 @@ async def on_message(message):
         return
 
     command = msg[0].lower()
+
+    # --- فەرمانی تاقیکردنەوەی Welcome (!test) ---
+    if command == "test":
+        try:
+            file = discord.File("welcome.gif", filename="welcome.gif")
+            await message.channel.send(
+                content=f"Welcome to Friends {message.author.mention}! ✨ (Test)",
+                file=file
+            )
+            await message.delete()
+        except Exception as e:
+            await message.channel.send(f"⚠️ گیفەکە نەدۆزرایەوە یان هەڵە هەەیە: {e}")
+        return
 
     # --- clear ---
     if command == "clear" and len(msg) == 2 and msg[1].isdigit():
@@ -138,7 +154,7 @@ async def on_message(message):
             await message.channel.send(f"⚠️ ئایدیەکە هەڵەیە یان بانی نەکراوە.", delete_after=5)
         return
 
-    # --- lock (داخستنی کەناڵ) ---
+    # --- lock ---
     if command == "lock":
         try:
             await message.channel.set_permissions(message.guild.default_role, send_messages=False)
@@ -147,7 +163,7 @@ async def on_message(message):
             await message.channel.send(f"⚠️ هەڵە ڕوویدا: {e}", delete_after=5)
         return
 
-    # --- unlock (کردنەوەی کەناڵ) ---
+    # --- unlock ---
     if command == "unlock":
         try:
             await message.channel.set_permissions(message.guild.default_role, send_messages=True)
