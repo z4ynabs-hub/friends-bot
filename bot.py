@@ -33,7 +33,7 @@ async def on_member_join(member):
         except Exception as e:
             print(f"کێشە لە دانی ڕۆڵ ڕوویدا: {e}")
 
-    # ناردنی گیف و نامەی بەخێرهاتن بە دەقی نوێ
+    # ناردنی گیف و نامەی بەخێرهاتن بە دەقی نوێی ئینگلیزی
     channel = bot.get_channel(WELCOME_CHANNEL_ID)
     if channel:
         try:
