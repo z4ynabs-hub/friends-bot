@@ -114,4 +114,5 @@ async def on_message(message):
             await message.channel.send(f"🔨 {target_member.mention} بان کرا لە سێرڤەر.", delete_after=5)
             await message.delete()
         return
+        
    bot.run(os.getenv("DISCORD_TOKEN"))
