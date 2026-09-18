@@ -117,4 +117,4 @@ async def on_message(message):
 
     await bot.process_commands(message)
    # تۆکنی نوێکراوەی بۆتەکەت لێرە بپێستە
-bot.run("MTU1MDU0NDM2NTkxNzcwNDMzMg.G4fcWn.yn7kSvUXFRJe5obpbm_Fj079w-6Eg0EaTb_3Lw") 
+bot.run("MTU1MDU0NDM2NTkxNzcwNDMzMg.GuwOYQ.gdtygIBd3h9tzTLiXCCIOqVRf1pXQHWRhbYBU4") 
