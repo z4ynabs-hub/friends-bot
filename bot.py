@@ -20,7 +20,7 @@ async def on_ready():
 
 
 # ---------------------------------------------------------
-# ٢. سیستەمی بەخێرهاتن و دانی ڕۆڵی Friends بە شێوەی ئۆتۆماتیکی
+# ٢. سیستەمی بەخێرهاتن (Welcome) و دانی ڕۆڵی Friends
 # ---------------------------------------------------------
 @bot.event
 async def on_member_join(member):
@@ -67,7 +67,7 @@ async def on_message(message):
 
     command = msg[0].lower()
 
-    # --- فەرمانی تاقیکردنەوەی Welcome (!test) ---
+    # --- تاقیکردنەوەی Welcome (!test) ---
     if command == "test":
         try:
             file = discord.File("welcome.gif", filename="welcome.gif")
@@ -80,10 +80,14 @@ async def on_message(message):
             await message.channel.send(f"⚠️ گیفەکە نەدۆزرایەوە یان هەڵە هەەیە: {e}")
         return
 
-    # --- clear ---
+    # --- clear (لەگەڵ نیشاندانی ژمارەی چاتە سڕدراوەکان) ---
     if command == "clear" and len(msg) == 2 and msg[1].isdigit():
-        amount = int(msg[1]) + 1
-        await message.channel.purge(limit=amount)
+        count = int(msg[1])
+        amount = count + 1
+        deleted = await message.channel.purge(limit=amount)
+        actual_deleted = len(deleted) - 1
+        if actual_deleted > 0:
+            await message.channel.send(f"🧹 {actual_deleted} چاتی سڕاوە لەناوبرا.", delete_after=5)
         return
 
     # --- mute ---
