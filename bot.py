@@ -20,11 +20,10 @@ async def on_ready():
 
 
 # ---------------------------------------------------------
-# ٢. سیستەمی بەخێرهاتن (لەگەڵ فەرمانی تاقیکردنەوەی !test)
+# ٢. سیستەمی بەخێرهاتن و دانی ڕۆڵی Friends بە شێوەی ئۆتۆماتیکی
 # ---------------------------------------------------------
 @bot.event
 async def on_member_join(member):
-    print(f"ئەندامێکی نوێ هات: {member.name}")
     role_name = "Friends"  
     role = discord.utils.get(member.guild.roles, name=role_name)
     
@@ -44,12 +43,10 @@ async def on_member_join(member):
             )
         except Exception as e:
             print(f"کێشەیەک لە بەخێرهاتن ڕوویدا: {e}")
-    else:
-        print("کەناڵی بەخێرهاتن نەدۆزرایەوە، دڵنیابە لە ئایدییەکەی!")
 
 
 # ---------------------------------------------------------
-# ٣. کۆماندەکان (Clear, Mute, Ban, Lock, Welcome Test)
+# ٣. کۆماندەکان (Clear, Mute, Unmute, Ban, Unban, Lock, Unlock, Test)
 # ---------------------------------------------------------
 @bot.event
 async def on_message(message):
