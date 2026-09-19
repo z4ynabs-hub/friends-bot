@@ -20,7 +20,7 @@ async def on_ready():
 
 
 # ---------------------------------------------------------
-# ٢. سیستەمی بەخێرهاتن بە شێوازی Embed (وەک وێنەکە)
+# ٢. سیستەمی بەخێرهاتن بە Embed و لینکە خێراکەی گیف
 # ---------------------------------------------------------
 @bot.event
 async def on_member_join(member):
@@ -36,8 +36,7 @@ async def on_member_join(member):
     channel = bot.get_channel(WELCOME_CHANNEL_ID)
     if channel:
         try:
-            # دروستکردنی ستایلی Embed وەک وێنەکە
-            embed = discord.Embed(color=0x2f3136) # ڕەنگی تۆخ و شیکی دیسکۆرد
+            embed = discord.Embed(color=0x2f3136)
             embed.description = (
                 "✦₊˚ ★⋆ Welcome ⋆★ ˚₊✦\n\n"
                 "└Thanks for joining ⌝^◝࿐₊˚｡⋆☆⋆｡˚₊\n\n"
@@ -47,8 +46,9 @@ async def on_member_join(member):
                 "ơೃ࿐ --- ⋆ #unknown ⋆ ---\n\n"
                 "=★ Have fun ₊˚ ｡ ⋆ ☆ ⋆ ｡˚"
             )
-            # دابینکردنی لینک یان ڤیدیۆ/گیفی بچووک لە خوارەوە (ئەگەرت هەبێت، لینکی گیفەکەی تێبنوسە یان وەک خۆی بیهێڵە)
-            embed.set_image(url="https://media.giphy.com/media/xT9IgzoKnwFNmISR8I/giphy.gif") # دەتوانیت لینکی گیفێکی سووک لێرە دابنێیت
+            
+            # 💡 لێرە لەبری "welcome.gif"، لینکی ڕاستەوخۆی ئەو گیفە دابنە کە پێشتر لە دیسکۆردت بارکردووە (Copy Link)
+            embed.set_image(url="https://jumpshare.com/s/AVOCe4jGIxPidnan7E8R")
 
             await channel.send(embed=embed)
         except Exception as e:
@@ -90,7 +90,9 @@ async def on_message(message):
                 "ơೃ࿐ --- ⋆ #unknown ⋆ ---\n\n"
                 "=★ Have fun ₊˚ ｡ ⋆ ☆ ⋆ ｡˚ (Test)"
             )
-            embed.set_image(url="https://media.giphy.com/media/xT9IgzoKnwFNmISR8I/giphy.gif")
+            
+            # 💡 لێرەش هەمان لینک دابنەوە بۆ تاقیکردنەوە
+            embed.set_image(url="لێرە_لینکە_ڕاستەوخۆکەی_گیفەکەت_دابنە")
             
             await message.channel.send(embed=embed)
             await message.delete()
