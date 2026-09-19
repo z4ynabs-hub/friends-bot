@@ -20,7 +20,7 @@ async def on_ready():
 
 
 # ---------------------------------------------------------
-# ٢. سیستەمی بەخێرهاتن (Welcome) و دانی ڕۆڵی Friends
+# ٢. سیستەمی بەخێرهاتن بە شێوازی Embed (وەک وێنەکە)
 # ---------------------------------------------------------
 @bot.event
 async def on_member_join(member):
@@ -36,11 +36,21 @@ async def on_member_join(member):
     channel = bot.get_channel(WELCOME_CHANNEL_ID)
     if channel:
         try:
-            file = discord.File("welcome.gif", filename="welcome.gif")
-            await channel.send(
-                content=f"Welcome to Friends {member.mention}! ✨",
-                file=file
+            # دروستکردنی ستایلی Embed وەک وێنەکە
+            embed = discord.Embed(color=0x2f3136) # ڕەنگی تۆخ و شیکی دیسکۆرد
+            embed.description = (
+                "✦₊˚ ★⋆ Welcome ⋆★ ˚₊✦\n\n"
+                "└Thanks for joining ⌝^◝࿐₊˚｡⋆☆⋆｡˚₊\n\n"
+                f"{member.mention}\n\n"
+                "ơೃ࿐ --- ⋆ #rules ⋆ ---\n"
+                "ơೃ࿐ --- ⋆ #unknown ⋆ ---\n"
+                "ơೃ࿐ --- ⋆ #unknown ⋆ ---\n\n"
+                "=★ Have fun ₊˚ ｡ ⋆ ☆ ⋆ ｡˚"
             )
+            # دابینکردنی لینک یان ڤیدیۆ/گیفی بچووک لە خوارەوە (ئەگەرت هەبێت، لینکی گیفەکەی تێبنوسە یان وەک خۆی بیهێڵە)
+            embed.set_image(url="https://media.giphy.com/media/xT9IgzoKnwFNmISR8I/giphy.gif") # دەتوانیت لینکی گیفێکی سووک لێرە دابنێیت
+
+            await channel.send(embed=embed)
         except Exception as e:
             print(f"کێشەیەک لە بەخێرهاتن ڕوویدا: {e}")
 
@@ -67,20 +77,28 @@ async def on_message(message):
 
     command = msg[0].lower()
 
-    # --- تاقیکردنەوەی Welcome (!test) ---
+    # --- تاقیکردنەوەی Welcome بە Embed (!test) ---
     if command == "test":
         try:
-            file = discord.File("welcome.gif", filename="welcome.gif")
-            await message.channel.send(
-                content=f"Welcome to Friends {message.author.mention}! ✨ (Test)",
-                file=file
+            embed = discord.Embed(color=0x2f3136)
+            embed.description = (
+                "✦₊˚ ★⋆ Welcome ⋆★ ˚₊✦\n\n"
+                "└Thanks for joining ⌝^◝࿐₊˚｡⋆☆⋆｡˚₊\n\n"
+                f"{message.author.mention}\n\n"
+                "ơೃ࿐ --- ⋆ #rules ⋆ ---\n"
+                "ơೃ࿐ --- ⋆ #unknown ⋆ ---\n"
+                "ơೃ࿐ --- ⋆ #unknown ⋆ ---\n\n"
+                "=★ Have fun ₊˚ ｡ ⋆ ☆ ⋆ ｡˚ (Test)"
             )
+            embed.set_image(url="https://media.giphy.com/media/xT9IgzoKnwFNmISR8I/giphy.gif")
+            
+            await message.channel.send(embed=embed)
             await message.delete()
         except Exception as e:
-            await message.channel.send(f"⚠️ گیفەکە نەدۆزرایەوە یان هەڵە هەەیە: {e}")
+            await message.channel.send(f"⚠️ هەڵە هەەیە: {e}")
         return
 
-    # --- clear (لەگەڵ نیشاندانی ژمارەی چاتە سڕدراوەکان) ---
+    # --- clear ---
     if command == "clear" and len(msg) == 2 and msg[1].isdigit():
         count = int(msg[1])
         amount = count + 1
