@@ -34,8 +34,8 @@ async def on_member_join(member):
                 "└Thanks for joining ⌝^◝࿐₊˚｡⋆☆⋆｡˚₊\n\n"
                 f"{member.mention}\n\n"
                 "ơೃ࿐ --- ⋆ #rules ⋆ ---\n"
-                "ơೃ࿐ --- ⋆ #unknown ⋆ ---\n"
-                "ơೃ࿐ --- ⋆ #unknown ⋆ ---\n\n"
+                "ơೃ࿐ --- ⋆ #FriendsZone ⋆ -"
+                "ơೃ࿐ --- ⋆ #Fra seu Ryaa ⋆ ---\n\n"
                 "=★ Have fun ₊˚ ｡ ⋆ ☆ ⋆ ｡˚"
             )
             embed.set_image(url="https://cdn.discordapp.com/attachments/1550619956423688342/1550988205237739570/welcome.gif?ex=6ab055d4&is=6aaf0454&hm=819d4831efa34240243d77e6af086bf1adf53b749701fac8e1d4855c70481c29&")
@@ -87,10 +87,10 @@ async def on_message(message):
         deleted = await message.channel.purge(limit=amount)
         actual_deleted = len(deleted) - 1
         if actual_deleted > 0:
-            await message.channel.send(f"🧹 {actual_deleted} chati sraw laubra.", delete_after=5)
+            await message.channel.send(f"🧹 {actual_deleted} safkra.", delete_after=5)
         return
 
-    # --- Mute (بە بێ Timeout: داخستنی چات لە کەناڵ و مایکی ڤۆیس) ---
+    # --- Mute ---
     if command == "mute":
         target_member = None
         if message.mentions:
@@ -101,20 +101,17 @@ async def on_message(message):
 
         if target_member:
             try:
-                # ١. قەدەغەکردنی چات لەم کەناڵەدا
                 await message.channel.set_permissions(target_member, send_messages=False)
-                
-                # ٢. میوتکردنی لە ڤۆیس (ئگەر لە ڤۆیسدا بێت)
                 if target_member.voice:
                     await target_member.edit(mute=True)
 
-                await message.channel.send(f"🤐 {target_member.mention} chati lasar daxرا و لە ڤۆیسیش میوت کرا هەتا !unmute دەکرێت.", delete_after=5)
+                await message.channel.send(f"mute kra badaxawa bojarekitr aqllba {target_member.mention}", delete_after=5)
                 await message.delete()
             except Exception as e:
-                await message.channel.send(f"⚠️ Hala ruwida: {e}", delete_after=5)
+                await message.channel.send(f"⚠️ Hala ruywida ba avlu bre ba chayka: {e}", delete_after=5)
         return
 
-    # --- Unmute (لادانی قەدەغەی چات و مایک) ---
+    # --- Unmute ---
     if command == "unmute":
         target_member = None
         if message.mentions:
@@ -125,17 +122,14 @@ async def on_message(message):
 
         if target_member:
             try:
-                # ١. گەڕاندنەوەی دەسەڵاتی چات بۆ دۆخی ئاسایی لەم کەناڵەدا
                 await message.channel.set_permissions(target_member, overwrite=None)
-                
-                # ٢. لادانی میوتی ڤۆیس
                 if target_member.voice:
                     await target_member.edit(mute=False)
 
-                await message.channel.send(f"🔊 {target_member.mention} unmute kra w chati bo garandrawa.", delete_after=5)
+                await message.channel.send(f"unmute kra aqllba {target_member.mention}", delete_after=5)
                 await message.delete()
             except Exception as e:
-                await message.channel.send(f"⚠️ Hala ruwida: {e}", delete_after=5)
+                await message.channel.send(f"⚠️ Hala ruyda ba avlu bre ba chayka: {e}", delete_after=5)
         return
 
     # --- Ban ---
@@ -150,10 +144,10 @@ async def on_message(message):
         if target_member:
             try:
                 await target_member.ban(reason="Banned by command")
-                await message.channel.send(f"🔨 {target_member.mention} ban kra.", delete_after=5)
+                await message.channel.send(f"ban kra badaxawa {target_member.mention}", delete_after=5)
                 await message.delete()
             except Exception as e:
-                await message.channel.send(f"⚠️ Hala ruwida: {e}", delete_after=5)
+                await message.channel.send(f"⚠️ Hala ruyda ba avlu bre: {e}", delete_after=5)
         return
 
     # --- Unban ---
