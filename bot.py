@@ -48,7 +48,7 @@ async def on_member_join(member):
             )
             
             # 💡 لێرە لەبری "welcome.gif"، لینکی ڕاستەوخۆی ئەو گیفە دابنە کە پێشتر لە دیسکۆردت بارکردووە (Copy Link)
-            embed.set_image(url="https://jumpshare.com/s/AVOCe4jGIxPidnan7E8R")
+            embed.set_image(url="https://ibb.co/604KGFXC")
 
             await channel.send(embed=embed)
         except Exception as e:
