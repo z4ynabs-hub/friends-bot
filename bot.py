@@ -20,7 +20,7 @@ async def on_ready():
 
 
 # ---------------------------------------------------------
-# ٢. سیستەمی بەخێرهاتن بە Embed و لینکی گیفەکە
+# ٢. سیستەمی بەخێرهاتن بە Embed و لینکی خێرای گیفەکەت
 # ---------------------------------------------------------
 @bot.event
 async def on_member_join(member):
@@ -47,8 +47,8 @@ async def on_member_join(member):
                 "=★ Have fun ₊˚ ｡ ⋆ ☆ ⋆ ｡˚"
             )
             
-            # لینکی فەرمی گیفەکە کە ڕاستەوخۆ کار دەکات
-            embed.set_image(url="https://media.giphy.com/media/xT9IgzoKnwFNmISR8I/giphy.gif")
+            # لینکی ڕاستەوخۆی گیفەکەی خۆت
+            embed.set_image(url="https://i.ibb.co/jkLCqDJX/welcome.gif")
 
             await channel.send(embed=embed)
         except Exception as e:
@@ -91,7 +91,7 @@ async def on_message(message):
                 "=★ Have fun ₊˚ ｡ ⋆ ☆ ⋆ ｡˚ (Test)"
             )
             
-            embed.set_image(url="https://media.giphy.com/media/xT9IgzoKnwFNmISR8I/giphy.gif")
+            embed.set_image(url="https://i.ibb.co/jkLCqDJX/welcome.gif")
             
             await message.channel.send(embed=embed)
             await message.delete()
