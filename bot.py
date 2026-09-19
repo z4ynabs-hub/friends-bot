@@ -39,7 +39,8 @@ async def on_member_join(member):
                 "ơೃ࿐ --- ⋆ #unknown ⋆ ---\n\n"
                 "=★ Have fun ₊˚ ｡ ⋆ ☆ ⋆ ｡˚"
             )
-            embed.set_image(url="https://i.ibb.co/jkLCqDJX/welcome.gif") #
+            # Lere linki gifakai xot danra ke la server-i xot uploadi kray (Copy Link)
+            embed.set_image(url="https://i.ibb.co/jkLCqDJX/welcome.gif")
             await channel.send(embed=embed)
         except Exception as e:
             print(f"Welcome error: {e}")
@@ -75,7 +76,7 @@ async def on_message(message):
                 "ơೃ࿐ --- ⋆ #unknown ⋆ ---\n\n"
                 "=★ Have fun ₊˚ ｡ ⋆ ☆ ⋆ ｡˚ (Test)"
             )
-            embed.set_image(url="https://i.ibb.co/jkLCqDJX/welcome.gif") #
+            embed.set_image(url="https://i.ibb.co/jkLCqDJX/welcome.gif")
             await message.channel.send(embed=embed)
             await message.delete()
         except Exception as e:
