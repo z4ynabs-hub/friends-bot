@@ -29,6 +29,8 @@ async def on_member_join(member):
     if channel:
         try:
             embed = discord.Embed(color=0x2f3136)
+            # زیادکردنی وێنە و ناوی ئەندامەکە لە سەرەوەی عیمبەدەکە
+            embed.set_author(name=member.display_name, icon_url=member.display_avatar.url)
             embed.description = (
                 "✦₊˚ ★⋆ Welcome ⋆★ ˚₊✦\n\n"
                 "└Thanks for joining ⌝^◝࿐₊˚｡⋆☆⋆｡˚₊\n\n"
@@ -66,6 +68,7 @@ async def on_message(message):
     if command == "test":
         try:
             embed = discord.Embed(color=0x2f3136)
+            embed.set_author(name=message.author.display_name, icon_url=message.author.display_avatar.url)
             embed.description = (
                 "✦₊˚ ★⋆ Welcome ⋆★ ˚₊✦\n\n"
                 "└Thanks for joining ⌝^◝࿐₊˚｡⋆☆⋆｡˚₊\n\n"
@@ -108,7 +111,6 @@ async def on_message(message):
             target_member = ref_msg.author
 
         if target_member:
-            # دڵنیابوونەوە لەوەی ئادمین ناتوانێت کەسێکی باڵاتر یان یەکسان خۆی میوت بکات
             if message.author != message.guild.owner and target_member.top_role >= message.author.top_role:
                 await message.channel.send(f"⚠️ {message.author.mention} natwani kaseki rolabarz yan yaksani xot mute bkay!", delete_after=5)
                 await message.delete()
