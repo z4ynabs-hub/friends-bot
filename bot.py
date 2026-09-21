@@ -40,7 +40,7 @@ async def on_member_join(member):
                 "=★ Have fun ₊˚ ｡ ⋆ ☆ ⋆ ｡˚"
             )
 
-            # وێنەی ئەو کەسەی join دەکات - سەرەوەی ڕاست
+            # وێنەی کەسی نوێ لە گۆشەی سەرەوەی ڕاست
             embed.set_thumbnail(
                 url=member.display_avatar.url
             )
@@ -90,7 +90,7 @@ async def on_message(message):
                 "=★ Have fun ₊˚ ｡ ⋆ ☆ ⋆ ｡˚ (Test)"
             )
 
-            # وێنەی ئەو کەسەی !test ی کرد - سەرەوەی ڕاست
+            # وێنەی کەسی Test لە گۆشەی سەرەوەی ڕاست
             embed.set_thumbnail(
                 url=message.author.display_avatar.url
             )
@@ -111,11 +111,14 @@ async def on_message(message):
     if command == "clear":
         if not message.author.guild_permissions.manage_messages:
             return
+
         if len(msg) == 2 and msg[1].isdigit():
             count = int(msg[1])
             amount = count + 1
+
             deleted = await message.channel.purge(limit=amount)
             actual_deleted = len(deleted) - 1
+
             if actual_deleted > 0:
                 await message.channel.send(
                     f"🧹 {actual_deleted} chat srawa.",
@@ -123,20 +126,27 @@ async def on_message(message):
                 )
         return
 
-    # --- Mute (تەنها بۆ ئادمینەکان + پشکنینی پلەی ڕۆڵ) ---
+    # --- Mute (تەنها Text Mute) ---
     if command == "mute":
         if not message.author.guild_permissions.manage_roles and not message.author.guild_permissions.administrator:
             return
         
         target_member = None
+
         if message.mentions:
             target_member = message.mentions[0]
+
         elif message.reference:
-            ref_msg = await message.channel.fetch_message(message.reference.message_id)
+            ref_msg = await message.channel.fetch_message(
+                message.reference.message_id
+            )
             target_member = ref_msg.author
 
         if target_member:
-            if message.author != message.guild.owner and target_member.top_role >= message.author.top_role:
+            if (
+                message.author != message.guild.owner
+                and target_member.top_role >= message.author.top_role
+            ):
                 await message.channel.send(
                     f"⚠️ {message.author.mention} natwani kaseki rolabarz yan yaksani xot mute bkay!",
                     delete_after=5
@@ -145,18 +155,19 @@ async def on_message(message):
                 return
 
             try:
+                # تەنها Text Mute
                 await message.channel.set_permissions(
                     target_member,
                     send_messages=False
                 )
 
-                if target_member.voice:
-                    await target_member.edit(mute=True)
+                # Voice mute ناکرێت
 
                 await message.channel.send(
                     f"mute kra badaxawa bot bojarekitr aqllba {target_member.mention}",
                     delete_after=5
                 )
+
                 await message.delete()
 
             except Exception as e:
@@ -166,20 +177,27 @@ async def on_message(message):
                 )
         return
 
-    # --- Unmute (تەنها بۆ ئادمینەکان) ---
+    # --- Unmute (تەنها Text Unmute) ---
     if command == "unmute":
         if not message.author.guild_permissions.manage_roles and not message.author.guild_permissions.administrator:
             return
 
         target_member = None
+
         if message.mentions:
             target_member = message.mentions[0]
+
         elif message.reference:
-            ref_msg = await message.channel.fetch_message(message.reference.message_id)
+            ref_msg = await message.channel.fetch_message(
+                message.reference.message_id
+            )
             target_member = ref_msg.author
 
         if target_member:
-            if message.author != message.guild.owner and target_member.top_role >= message.author.top_role:
+            if (
+                message.author != message.guild.owner
+                and target_member.top_role >= message.author.top_role
+            ):
                 await message.channel.send(
                     f"⚠️ {message.author.mention} natwani unmute kaseki rollbarz bkay!",
                     delete_after=5
@@ -188,18 +206,19 @@ async def on_message(message):
                 return
 
             try:
+                # تەنها Text Unmute
                 await message.channel.set_permissions(
                     target_member,
                     overwrite=None
                 )
 
-                if target_member.voice:
-                    await target_member.edit(mute=False)
+                # Voice unmute ناکرێت
 
                 await message.channel.send(
                     f"unmute kra aqllba {target_member.mention}",
                     delete_after=5
                 )
+
                 await message.delete()
 
             except Exception as e:
@@ -209,20 +228,27 @@ async def on_message(message):
                 )
         return
 
-    # --- Ban (تەنها بۆ ئۆوێنەر و جێگری ئۆوێنەر یان ئادمینە باڵاکان) ---
+    # --- Ban (تەنها بۆ ئادمینەکان) ---
     if command == "ban":
         if not message.author.guild_permissions.ban_members:
             return
 
         target_member = None
+
         if message.mentions:
             target_member = message.mentions[0]
+
         elif message.reference:
-            ref_msg = await message.channel.fetch_message(message.reference.message_id)
+            ref_msg = await message.channel.fetch_message(
+                message.reference.message_id
+            )
             target_member = ref_msg.author
 
         if target_member:
-            if message.author != message.guild.owner and target_member.top_role >= message.author.top_role:
+            if (
+                message.author != message.guild.owner
+                and target_member.top_role >= message.author.top_role
+            ):
                 await message.channel.send(
                     f"⚠️ Natwani admin ban bkay!",
                     delete_after=5
@@ -231,11 +257,15 @@ async def on_message(message):
                 return
 
             try:
-                await target_member.ban(reason="Banned by command")
+                await target_member.ban(
+                    reason="Banned by command"
+                )
+
                 await message.channel.send(
                     f"ban kra badaxawa {target_member.mention}",
                     delete_after=5
                 )
+
                 await message.delete()
 
             except Exception as e:
@@ -253,6 +283,7 @@ async def on_message(message):
         try:
             user_id = int(msg[1])
             user = await bot.fetch_user(user_id)
+
             await message.guild.unban(user)
 
             await message.channel.send(
