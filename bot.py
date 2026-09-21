@@ -29,6 +29,7 @@ async def on_member_join(member):
     if channel:
         try:
             embed = discord.Embed(color=0x2f3136)
+
             embed.description = (
                 "✦₊˚ ★⋆ Welcome ⋆★ ˚₊✦\n\n"
                 "└Thanks for joining ⌝^◝࿐₊˚｡⋆☆⋆｡˚₊\n\n"
@@ -38,10 +39,22 @@ async def on_member_join(member):
                 "ơೃ࿐ --- ⋆ #Fraa-Seuii-Ryaa⋆ ---\n\n"
                 "=★ Have fun ₊˚ ｡ ⋆ ☆ ⋆ ｡˚"
             )
-            embed.set_image(url="https://cdn.discordapp.com/attachments/1550619956423688342/1550988205237739570/welcome.gif?ex=6ab25014&is=6ab0fe94&hm=e75527cad967d8a82f7ce1b059ebd0b1803af1429ad721bbc2b7c91d62abf2a8&")
+
+            # وێنەی ئەو کەسەی join دەکات - سەرەوەی ڕاست
+            embed.set_thumbnail(
+                url=member.display_avatar.url
+            )
+
+            # GIF بە لینک
+            embed.set_image(
+                url="https://cdn.discordapp.com/attachments/1550619956423688342/1551709269043314768/welcome.gif?ex=6ab2f55f&is=6ab1a3df&hm=612d5cdf1190d53382436a598c1d313a918b6b1b25bc93ac905d5cfd8ffd1780&"
+            )
+
             await channel.send(embed=embed)
+
         except Exception as e:
             print(f"Welcome error: {e}")
+
 
 @bot.event
 async def on_message(message):
@@ -66,6 +79,7 @@ async def on_message(message):
     if command == "test":
         try:
             embed = discord.Embed(color=0x2f3136)
+
             embed.description = (
                 "✦₊˚ ★⋆ Welcome ⋆★ ˚₊✦\n\n"
                 "└Thanks for joining ⌝^◝࿐₊˚｡⋆☆⋆｡˚₊\n\n"
@@ -75,9 +89,20 @@ async def on_message(message):
                 "ơೃ࿐ --- ⋆ #Fraa-Seuii-Ryaa ⋆ ---\n\n"
                 "=★ Have fun ₊˚ ｡ ⋆ ☆ ⋆ ｡˚ (Test)"
             )
-            embed.set_image(url="https://cdn.discordapp.com/attachments/1550619956423688342/1550988205237739570/welcome.gif?ex=6ab25014&is=6ab0fe94&hm=e75527cad967d8a82f7ce1b059ebd0b1803af1429ad721bbc2b7c91d62abf2a8&")
+
+            # وێنەی ئەو کەسەی !test ی کرد - سەرەوەی ڕاست
+            embed.set_thumbnail(
+                url=message.author.display_avatar.url
+            )
+
+            # GIF بە لینک
+            embed.set_image(
+                url="https://cdn.discordapp.com/attachments/1550619956423688342/1551709269043314768/welcome.gif?ex=6ab2f55f&is=6ab1a3df&hm=612d5cdf1190d53382436a598c1d313a918b6b1b25bc93ac905d5cfd8ffd1780&"
+            )
+
             await message.channel.send(embed=embed)
             await message.delete()
+
         except Exception as e:
             await message.channel.send(f"⚠️ Error: {e}")
         return
@@ -92,7 +117,10 @@ async def on_message(message):
             deleted = await message.channel.purge(limit=amount)
             actual_deleted = len(deleted) - 1
             if actual_deleted > 0:
-                await message.channel.send(f"🧹 {actual_deleted} chat srawa.", delete_after=5)
+                await message.channel.send(
+                    f"🧹 {actual_deleted} chat srawa.",
+                    delete_after=5
+                )
         return
 
     # --- Mute (تەنها بۆ ئادمینەکان + پشکنینی پلەی ڕۆڵ) ---
@@ -109,19 +137,33 @@ async def on_message(message):
 
         if target_member:
             if message.author != message.guild.owner and target_member.top_role >= message.author.top_role:
-                await message.channel.send(f"⚠️ {message.author.mention} natwani kaseki rolabarz yan yaksani xot mute bkay!", delete_after=5)
+                await message.channel.send(
+                    f"⚠️ {message.author.mention} natwani kaseki rolabarz yan yaksani xot mute bkay!",
+                    delete_after=5
+                )
                 await message.delete()
                 return
 
             try:
-                await message.channel.set_permissions(target_member, send_messages=False)
+                await message.channel.set_permissions(
+                    target_member,
+                    send_messages=False
+                )
+
                 if target_member.voice:
                     await target_member.edit(mute=True)
 
-                await message.channel.send(f"mute kra badaxawa bot bojarekitr aqllba {target_member.mention}", delete_after=5)
+                await message.channel.send(
+                    f"mute kra badaxawa bot bojarekitr aqllba {target_member.mention}",
+                    delete_after=5
+                )
                 await message.delete()
+
             except Exception as e:
-                await message.channel.send(f"⚠️ Halla ruywyda: {e}", delete_after=5)
+                await message.channel.send(
+                    f"⚠️ Halla ruywyda: {e}",
+                    delete_after=5
+                )
         return
 
     # --- Unmute (تەنها بۆ ئادمینەکان) ---
@@ -138,19 +180,33 @@ async def on_message(message):
 
         if target_member:
             if message.author != message.guild.owner and target_member.top_role >= message.author.top_role:
-                await message.channel.send(f"⚠️ {message.author.mention} natwani unmute kaseki rollbarz bkay!", delete_after=5)
+                await message.channel.send(
+                    f"⚠️ {message.author.mention} natwani unmute kaseki rollbarz bkay!",
+                    delete_after=5
+                )
                 await message.delete()
                 return
 
             try:
-                await message.channel.set_permissions(target_member, overwrite=None)
+                await message.channel.set_permissions(
+                    target_member,
+                    overwrite=None
+                )
+
                 if target_member.voice:
                     await target_member.edit(mute=False)
 
-                await message.channel.send(f"unmute kra aqllba {target_member.mention}", delete_after=5)
+                await message.channel.send(
+                    f"unmute kra aqllba {target_member.mention}",
+                    delete_after=5
+                )
                 await message.delete()
+
             except Exception as e:
-                await message.channel.send(f"⚠️ Halla rwyda: {e}", delete_after=5)
+                await message.channel.send(
+                    f"⚠️ Halla rwyda: {e}",
+                    delete_after=5
+                )
         return
 
     # --- Ban (تەنها بۆ ئۆوێنەر و جێگری ئۆوێنەر یان ئادمینە باڵاکان) ---
@@ -167,55 +223,101 @@ async def on_message(message):
 
         if target_member:
             if message.author != message.guild.owner and target_member.top_role >= message.author.top_role:
-                await message.channel.send(f"⚠️ Natwani admin ban bkay!", delete_after=5)
+                await message.channel.send(
+                    f"⚠️ Natwani admin ban bkay!",
+                    delete_after=5
+                )
                 await message.delete()
                 return
 
             try:
                 await target_member.ban(reason="Banned by command")
-                await message.channel.send(f"ban kra badaxawa {target_member.mention}", delete_after=5)
+                await message.channel.send(
+                    f"ban kra badaxawa {target_member.mention}",
+                    delete_after=5
+                )
                 await message.delete()
+
             except Exception as e:
-                await message.channel.send(f"⚠️ Halla rwyda: {e}", delete_after=5)
+                await message.channel.send(
+                    f"⚠️ Halla ruywyda: {e}",
+                    delete_after=5
+                )
         return
 
     # --- Unban ---
     if command == "unban" and len(msg) == 2:
         if not message.author.guild_permissions.ban_members:
             return
+
         try:
             user_id = int(msg[1])
             user = await bot.fetch_user(user_id)
             await message.guild.unban(user)
-            await message.channel.send(f"🔓 Unbanned successfully.", delete_after=5)
+
+            await message.channel.send(
+                "🔓 Unbanned successfully.",
+                delete_after=5
+            )
+
         except Exception as e:
-            await message.channel.send(f"⚠️ Error: {e}", delete_after=5)
+            await message.channel.send(
+                f"⚠️ Error: {e}",
+                delete_after=5
+            )
         return
 
     # --- Lock (تەنها بۆ ئادمینەکان) ---
     if command == "lock":
         if not message.author.guild_permissions.manage_channels:
             return
+
         try:
-            await message.channel.set_permissions(message.guild.default_role, send_messages=False)
-            await message.channel.send("🔒 Channel locked.", delete_after=5)
+            await message.channel.set_permissions(
+                message.guild.default_role,
+                send_messages=False
+            )
+
+            await message.channel.send(
+                "🔒 Channel locked.",
+                delete_after=5
+            )
+
             await message.delete()
+
         except Exception as e:
-            await message.channel.send(f"⚠️ Error: {e}", delete_after=5)
+            await message.channel.send(
+                f"⚠️ Error: {e}",
+                delete_after=5
+            )
         return
 
     # --- Unlock (تەنها بۆ ئادمینەکان) ---
     if command == "unlock":
         if not message.author.guild_permissions.manage_channels:
             return
+
         try:
-            await message.channel.set_permissions(message.guild.default_role, send_messages=True)
-            await message.channel.send("🔓 Channel unlocked.", delete_after=5)
+            await message.channel.set_permissions(
+                message.guild.default_role,
+                send_messages=True
+            )
+
+            await message.channel.send(
+                "🔓 Channel unlocked.",
+                delete_after=5
+            )
+
             await message.delete()
+
         except Exception as e:
-            await message.channel.send(f"⚠️ Error: {e}", delete_after=5)
+            await message.channel.send(
+                f"⚠️ Error: {e}",
+                delete_after=5
+            )
         return
 
     await bot.process_commands(message)
+
 
 bot.run(os.getenv("DISCORD_TOKEN"))
