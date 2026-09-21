@@ -41,7 +41,7 @@ async def on_member_join(member):
                 "=★ Have fun ₊˚ ｡ ⋆ ☆ ⋆ ｡˚"
             )
             # GIFـە شینەکەی خۆت وەک خۆی لە خوارەوە دانراوە
-            embed.set_image(url="https://cdn.discordapp.com/attachments/1550619956423688342/1550988205237739570/welcome.gif?ex=6ab055d4&is=6aaf0454&hm=819d4831efa34240243d77e6af086bf1adf53b749701fac8e1d4855c70481c29&")
+            embed.set_image(url="https://cdn.discordapp.com/attachments/1550619956423688342/1550988205237739570/welcome.gif?ex=6ab25014&is=6ab0fe94&hm=e75527cad967d8a82f7ce1b059ebd0b1803af1429ad721bbc2b7c91d62abf2a8&")
             await channel.send(embed=embed)
         except Exception as e:
             print(f"Welcome error: {e}")
@@ -79,7 +79,7 @@ async def on_message(message):
                 "ơೃ࿐ --- ⋆ #Fraa-Seuii-Ryaa ⋆ ---\n\n"
                 "=★ Have fun ₊˚ ｡ ⋆ ☆ ⋆ ｡˚ (Test)"
             )
-            embed.set_image(url="https://cdn.discordapp.com/attachments/1550619956423688342/1550988205237739570/welcome.gif?ex=6ab055d4&is=6aaf0454&hm=819d4831efa34240243d77e6af086bf1adf53b749701fac8e1d4855c70481c29&")
+            embed.set_image(url="https://cdn.discordapp.com/attachments/1550619956423688342/1550988205237739570/welcome.gif?ex=6ab25014&is=6ab0fe94&hm=e75527cad967d8a82f7ce1b059ebd0b1803af1429ad721bbc2b7c91d62abf2a8&")
             await message.channel.send(embed=embed)
             await message.delete()
         except Exception as e:
