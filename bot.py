@@ -29,6 +29,7 @@ async def on_member_join(member):
     if channel:
         try:
             embed = discord.Embed(color=0x2f3136)
+            # وێنەی پروفایلی کەسەکە لە گۆشەی ڕاستی سەرەوە
             embed.set_thumbnail(url=member.display_avatar.url)
             embed.description = (
                 "✦₊˚ ★⋆ Welcome ⋆★ ˚₊✦\n\n"
@@ -39,6 +40,7 @@ async def on_member_join(member):
                 "ơೃ࿐ --- ⋆ #Fraa-Seuii-Ryaa⋆ ---\n\n"
                 "=★ Have fun ₊˚ ｡ ⋆ ☆ ⋆ ｡˚"
             )
+            # GIFـە شینەکەی خۆت وەک خۆی لە خوارەوە دانراوە
             embed.set_image(url="https://cdn.discordapp.com/attachments/1550619956423688342/1550988205237739570/welcome.gif?ex=6ab055d4&is=6aaf0454&hm=819d4831efa34240243d77e6af086bf1adf53b749701fac8e1d4855c70481c29&")
             await channel.send(embed=embed)
         except Exception as e:
@@ -84,7 +86,7 @@ async def on_message(message):
             await message.channel.send(f"⚠️ Error: {e}")
         return
 
-    # --- Clear ---
+    # --- Clear (تەنها بۆ ئادمینەکان) ---
     if command == "clear":
         if not message.author.guild_permissions.manage_messages:
             return
@@ -97,7 +99,7 @@ async def on_message(message):
                 await message.channel.send(f"🧹 {actual_deleted} chat srawa.", delete_after=5)
         return
 
-    # --- Mute ---
+    # --- Mute (تەنها بۆ ئادمینەکان + پشکنینی پلەی ڕۆڵ) ---
     if command == "mute":
         if not message.author.guild_permissions.manage_roles and not message.author.guild_permissions.administrator:
             return
@@ -110,6 +112,7 @@ async def on_message(message):
             target_member = ref_msg.author
 
         if target_member:
+            # دڵنیابوونەوە لەوەی ئادمین ناتوانێت کەسێکی باڵاتر یان یەکسان خۆی میوت بکات
             if message.author != message.guild.owner and target_member.top_role >= message.author.top_role:
                 await message.channel.send(f"⚠️ {message.author.mention} natwani kaseki rolabarz yan yaksani xot mute bkay!", delete_after=5)
                 await message.delete()
@@ -126,7 +129,7 @@ async def on_message(message):
                 await message.channel.send(f"⚠️ Halla ruywyda: {e}", delete_after=5)
         return
 
-    # --- Unmute ---
+    # --- Unmute (تەنها بۆ ئادمینەکان) ---
     if command == "unmute":
         if not message.author.guild_permissions.manage_roles and not message.author.guild_permissions.administrator:
             return
@@ -155,7 +158,7 @@ async def on_message(message):
                 await message.channel.send(f"⚠️ Halla rwyda: {e}", delete_after=5)
         return
 
-    # --- Ban ---
+    # --- Ban (تەنها بۆ ئۆوێنەر و جێگری ئۆوێنەر یان ئادمینە باڵاکان) ---
     if command == "ban":
         if not message.author.guild_permissions.ban_members:
             return
@@ -194,7 +197,7 @@ async def on_message(message):
             await message.channel.send(f"⚠️ Error: {e}", delete_after=5)
         return
 
-    # --- Lock ---
+    # --- Lock (تەنها بۆ ئادمینەکان) ---
     if command == "lock":
         if not message.author.guild_permissions.manage_channels:
             return
@@ -206,7 +209,7 @@ async def on_message(message):
             await message.channel.send(f"⚠️ Error: {e}", delete_after=5)
         return
 
-    # --- Unlock ---
+    # --- Unlock (تەنها بۆ ئادمینەکان) ---
     if command == "unlock":
         if not message.author.guild_permissions.manage_channels:
             return
