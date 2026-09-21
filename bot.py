@@ -29,8 +29,6 @@ async def on_member_join(member):
     if channel:
         try:
             embed = discord.Embed(color=0x2f3136)
-            # زیادکردنی وێنە و ناوی ئەندامەکە لە سەرەوەی عیمبەدەکە
-            embed.set_author(name=member.display_name, icon_url=member.display_avatar.url)
             embed.description = (
                 "✦₊˚ ★⋆ Welcome ⋆★ ˚₊✦\n\n"
                 "└Thanks for joining ⌝^◝࿐₊˚｡⋆☆⋆｡˚₊\n\n"
@@ -40,7 +38,8 @@ async def on_member_join(member):
                 "ơೃ࿐ --- ⋆ #Fraa-Seuii-Ryaa⋆ ---\n\n"
                 "=★ Have fun ₊˚ ｡ ⋆ ☆ ⋆ ｡˚"
             )
-            embed.set_image(url="https://cdn.discordapp.com/attachments/1550619956423688342/1550988205237739570/welcome.gif?ex=6ab055d4&is=6aaf0454&hm=819d4831efa34240243d77e6af086bf1adf53b749701fac8e1d4855c70481c29&")
+            # داناینی وێنەی پروفایلی کەسەکە بە گەورەیی لەناو عیمبەدەکەدا
+            embed.set_image(url=member.display_avatar.url)
             await channel.send(embed=embed)
         except Exception as e:
             print(f"Welcome error: {e}")
@@ -68,7 +67,6 @@ async def on_message(message):
     if command == "test":
         try:
             embed = discord.Embed(color=0x2f3136)
-            embed.set_author(name=message.author.display_name, icon_url=message.author.display_avatar.url)
             embed.description = (
                 "✦₊˚ ★⋆ Welcome ⋆★ ˚₊✦\n\n"
                 "└Thanks for joining ⌝^◝࿐₊˚｡⋆☆⋆｡˚₊\n\n"
@@ -78,7 +76,8 @@ async def on_message(message):
                 "ơೃ࿐ --- ⋆ #Fraa-Seuii-Ryaa ⋆ ---\n\n"
                 "=★ Have fun ₊˚ ｡ ⋆ ☆ ⋆ ｡˚ (Test)"
             )
-            embed.set_image(url="https://cdn.discordapp.com/attachments/1550619956423688342/1550988205237739570/welcome.gif?ex=6ab055d4&is=6aaf0454&hm=819d4831efa34240243d77e6af086bf1adf53b749701fac8e1d4855c70481c29&")
+            # داناینی وێنەی پروفایلی بەکارهێنەر لە کۆماندی تەستدا بە گەورەیی
+            embed.set_image(url=message.author.display_avatar.url)
             await message.channel.send(embed=embed)
             await message.delete()
         except Exception as e:
