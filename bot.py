@@ -406,87 +406,34 @@ async def seuafraaaRyaaa(ctx):
 
 # =========================================================
 # DEVELOPER ROLE COLOR
+# !devcolor
 #
-# Examples:
-# !devcolor #000000
-# !devcolor #ffffff
-# !devcolor #ff0000
-# !devcolor #101b2a
-#
-# تەنها ئەو کەسانەی Developer Role ـیان هەیە
-# دەتوانن ئەم فرمانە بەکاربهێنن.
+# تەنها Owner دەتوانێت بەکاریبهێنێت.
+# تەنها ڕەنگی Developer دەگۆڕێت.
 # =========================================================
 
 @bot.command()
-async def devcolor(ctx, color: str = None):
+async def devcolor(ctx):
 
-    # Developer Role
-    developer_role = ctx.guild.get_role(
+    if ctx.author.id != OWNER_ID:
+        return
+
+    role = ctx.guild.get_role(
         DEVELOPER_ROLE_ID
     )
 
-    if developer_role is None:
+    if role is None:
 
         await ctx.send(
-            "❌ Developer role نەدۆزرایەوە.",
+            "❌ ڕۆڵی Developer بە ID ـەکە نەدۆزرایەوە.",
             delete_after=5
         )
 
         return
 
-    # تەنها Developer ـەکان
-    if developer_role not in ctx.author.roles:
-
-        await ctx.send(
-            "❌ تۆ ڕۆڵی Developer ـت نییە.",
-            delete_after=5
-        )
-
-        return
-
-    # ئەگەر ڕەنگ نەنووسرابێت
-    if color is None:
-
-        await ctx.send(
-            "❌ ڕەنگەکە بنووسە. نموونە: `!devcolor #000000`",
-            delete_after=5
-        )
-
-        return
-
-    # پشکنینی شێوەی Hex
-    if (
-        not color.startswith("#")
-        or len(color) != 7
-    ):
-
-        await ctx.send(
-            "❌ ڕەنگەکە دەبێت بە شێوەی `#000000` بێت.",
-            delete_after=5
-        )
-
-        return
-
-    # پشکنینی هەموو کاراکتەرەکان
-    try:
-
-        new_color = discord.Colour.from_str(
-            color
-        )
-
-    except ValueError:
-
-        await ctx.send(
-            "❌ ئەم Hex Color ـە دروست نییە.",
-            delete_after=5
-        )
-
-        return
-
-    # بۆتەکە دەبێت لە سەرووی Developer بێت
     bot_member = ctx.guild.me
 
-    if developer_role >= bot_member.top_role:
+    if role >= bot_member.top_role:
 
         await ctx.send(
             "❌ ڕۆڵی Developer دەبێت لە خوار ڕۆڵی بۆتەکە بێت.",
@@ -497,24 +444,23 @@ async def devcolor(ctx, color: str = None):
 
     try:
 
-        await developer_role.edit(
-            colour=new_color,
-            reason=f"Developer role color changed by {ctx.author}"
+        await role.edit(
+            colour=discord.Colour.from_str(
+                "#101b2a"
+            ),
+            reason="Developer role color change"
         )
 
-        # سڕینەوەی فرمانەکە
         try:
             await ctx.message.delete()
         except:
             pass
 
         msg = await ctx.send(
-            f"✅ ڕەنگی Developer گۆڕدرا بۆ `{color.upper()}`."
+            "✅ ڕەنگی Developer کرایە `#101b2a`."
         )
 
-        await msg.delete(
-            delay=5
-        )
+        await msg.delete(delay=5)
 
     except discord.Forbidden:
 
