@@ -13,16 +13,6 @@ WELCOME_CHANNEL_ID = 1550619956423688342
 OWNER_ID = 1130455970494025860
 DEVELOPER_ROLE_ID = 1448989145740480605
 
-# Role IDs
-FRIENDSFCOLOR_ROLE_ID = 1550035593239461888
-BOTCOLOR_ROLE_ID = 1448989146885652603
-_COLOR_ROLE_ID = 1491385293457330229
-TRUSTCOLOR_ROLE_ID = 1448989152379932773
-SISCOLOR_ROLE_ID = 1448989144410886145
-BRCOLOR_ROLE_ID = 1448989153667711069
-XRCOLOR_ROLE_ID = 1451268943548383406
-FRIENDSCOLOR_ROLE_ID = 1448989154578010238
-
 WELCOME_GIF = "https://cdn.discordapp.com/attachments/1550619956423688342/1551709269043314768/welcome.gif?ex=6ab2f55f&is=6ab1a3df&hm=612d5cdf1190d53382436a598c1d313a918b6b1b25bc93ac905d5cfd8ffd1780&"
 
 QNM_IMAGE = "https://cdn.discordapp.com/attachments/1488625936927555816/1551783128962564176/7fb8c35c613b332ee89c22dc93bf2b33.jpg?ex=6ab33a28&is=6ab1e8a8&hm=f5c009e72ca533f5ca5b26d6c1af307b8645861da9875fee3662387774f3e51d&"
@@ -130,6 +120,7 @@ async def on_message(message):
     if message.author.bot:
         return
 
+    # Exact phrase
     if message.content.lower().strip() == "qnm bde":
 
         await message.channel.send(QNM_IMAGE)
@@ -340,57 +331,64 @@ async def devcolor(ctx, color: str = None):
     )
 
     if developer_role is None:
+
         await ctx.send(
             "❌ Developer role نەدۆزرایەوە.",
             delete_after=5
         )
+
         return
 
+    # Only Developer role
     if developer_role not in ctx.author.roles:
+
         await ctx.send(
             "❌ تۆ ڕۆڵی Developer ـت نییە.",
             delete_after=5
         )
+
         return
 
     if color is None:
+
         await ctx.send(
             "❌ ڕەنگەکە بنووسە. نموونە: `devcolor #000000`",
             delete_after=5
         )
+
         return
 
     if not color.startswith("#") or len(color) != 7:
+
         await ctx.send(
             "❌ ڕەنگەکە دەبێت بە شێوەی `#000000` بێت.",
             delete_after=5
         )
+
         return
 
     try:
+
         new_color = discord.Colour.from_str(color)
+
     except ValueError:
+
         await ctx.send(
             "❌ ئەم Hex Color ـە دروست نییە.",
             delete_after=5
         )
+
         return
 
     bot_member = ctx.guild.me
 
     if developer_role >= bot_member.top_role:
+
         await ctx.send(
             "❌ ڕۆڵی Developer دەبێت لە خوار ڕۆڵی بۆتەکە بێت.",
             delete_after=5
         )
-        return
 
-    # User must not be lower than the role
-    if developer_role > ctx.author.top_role:
-        await ctx.send(
-            "❌ ڕۆڵت نزمترە لەو ڕۆڵەی کە دەتەوێت بیگۆڕیت.",
-            delete_after=5
-        )
         return
 
     try:
@@ -412,131 +410,11 @@ async def devcolor(ctx, color: str = None):
         await msg.delete(delay=5)
 
     except discord.Forbidden:
+
         await ctx.send(
             "❌ بۆتەکە ناتوانێت ڕۆڵی Developer دەستکاری بکات.",
             delete_after=5
         )
-
-
-# =========================
-# ROLE COLORS
-# =========================
-
-async def change_role_color(ctx, role_id, color):
-
-    role = ctx.guild.get_role(role_id)
-
-    if role is None:
-        await ctx.send(
-            "❌ ئەم ڕۆڵە نەدۆزرایەوە.",
-            delete_after=5
-        )
-        return
-
-    if color is None:
-        await ctx.send(
-            "❌ ڕەنگەکە بنووسە. نموونە: `#000000`",
-            delete_after=5
-        )
-        return
-
-    if not color.startswith("#") or len(color) != 7:
-        await ctx.send(
-            "❌ ڕەنگەکە دەبێت بە شێوەی `#000000` بێت.",
-            delete_after=5
-        )
-        return
-
-    try:
-        new_color = discord.Colour.from_str(color)
-    except ValueError:
-        await ctx.send(
-            "❌ ئەم Hex Color ـە دروست نییە.",
-            delete_after=5
-        )
-        return
-
-    bot_member = ctx.guild.me
-
-    # Bot must be above the role
-    if role >= bot_member.top_role:
-        await ctx.send(
-            "❌ بۆتەکە ناتوانێت ئەم ڕۆڵە بگۆڕێت.",
-            delete_after=5
-        )
-        return
-
-    # User must be equal or above the role
-    if role > ctx.author.top_role:
-        await ctx.send(
-            "❌ ڕۆڵت نزمترە لەو ڕۆڵەی کە دەتەوێت بیگۆڕیت.",
-            delete_after=5
-        )
-        return
-
-    try:
-
-        await role.edit(
-            colour=new_color,
-            reason=f"Role color changed by {ctx.author}"
-        )
-
-        try:
-            await ctx.message.delete()
-        except:
-            pass
-
-        msg = await ctx.send(
-            f"✅ ڕەنگی `{role.name}` گۆڕدرا بۆ `{color.upper()}`."
-        )
-
-        await msg.delete(delay=5)
-
-    except discord.Forbidden:
-        await ctx.send(
-            "❌ بۆتەکە ناتوانێت ئەم ڕۆڵە دەستکاری بکات.",
-            delete_after=5
-        )
-
-
-@bot.command()
-async def friendsfcolor(ctx, color: str = None):
-    await change_role_color(ctx, FRIENDSFCOLOR_ROLE_ID, color)
-
-
-@bot.command()
-async def botcolor(ctx, color: str = None):
-    await change_role_color(ctx, BOTCOLOR_ROLE_ID, color)
-
-
-@bot.command(name="_color")
-async def _color(ctx, color: str = None):
-    await change_role_color(ctx, _COLOR_ROLE_ID, color)
-
-
-@bot.command()
-async def trustcolor(ctx, color: str = None):
-    await change_role_color(ctx, TRUSTCOLOR_ROLE_ID, color)
-
-
-@bot.command()
-async def siscolor(ctx, color: str = None):
-    await change_role_color(ctx, SISCOLOR_ROLE_ID, color)
-
-
-@bot.command()
-async def brocolor(ctx, color: str = None):
-    await change_role_color(ctx, BRCOLOR_ROLE_ID, color)
-
-
-@bot.command()
-async def xrcolor(ctx, color: str = None):
-    await change_role_color(ctx, XRCOLOR_ROLE_ID, color)
-
-
-@bot.command()
-async def friendscolor(ctx, color: str = None):
-    await change_role_color(ctx, FRIENDSCOLOR_ROLE_ID, color)
 
 
 # =========================
