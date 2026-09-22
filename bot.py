@@ -22,7 +22,7 @@ bot = commands.Bot(
 WELCOME_CHANNEL_ID = 1550619956423688342
 
 # ID ـی خۆت لێرە دابنێ
-OWNER_ID = 1508823138308194438
+OWNER_ID = 1130455970494025860
 
 WELCOME_GIF = (
     "https://cdn.discordapp.com/attachments/"
