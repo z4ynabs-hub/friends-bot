@@ -93,8 +93,6 @@ async def on_member_join(member):
 
 ơೃ࿐ --- ⋆ #rules ⋆ ---
 ơೃ࿐ --- ⋆ #FriendsZone ⋆ ---
-ơೃ࿐ --- ⋆ #Fraa-Seuii-Ryaa⋆ ---
-
 =★ Have fun ₊˚ ｡ ⋆ ☆ ⋆ ｡˚
 """
     )
@@ -129,8 +127,6 @@ async def test(ctx):
 
 ơೃ࿐ --- ⋆ #rules ⋆ ---
 ơೃ࿐ --- ⋆ #FriendsZone ⋆ ---
-ơೃ࿐ --- ⋆ #Fraa-Seuii-Ryaa⋆ ---
-
 =★ Have fun ₊˚ ｡ ⋆ ☆ ⋆ ｡˚
 """
     )
