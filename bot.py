@@ -127,36 +127,127 @@ async def clear(ctx, amount: int):
     await msg.delete(delay=5)
 
 
-# MUTE
+# GET TARGET FROM MENTION OR REPLY
+async def get_target(ctx, member=None):
+    # Mention
+    if member is not None:
+        return member
+
+    # Reply
+    reference = ctx.message.reference
+
+    if reference and reference.message_id:
+        try:
+            if isinstance(reference.resolved, discord.Message):
+                return reference.resolved.author
+
+            replied_message = await ctx.channel.fetch_message(
+                reference.message_id
+            )
+
+            return replied_message.author
+
+        except:
+            return None
+
+    return None
+
+
+# CHECK TARGET HIERARCHY
+async def check_target(ctx, member):
+    if member is None:
+        await ctx.send(
+            "❌ تاگی بکە یان لەسەر پەیامی ئەو کەسە Reply بکە.",
+            delete_after=5
+        )
+        return False
+
+    # Server Owner cannot be targeted
+    if member.id == ctx.guild.owner_id:
+        await ctx.send(
+            "❌ خاوەنی سێرڤەر ناتوانرێت ئەم کارەی لەگەڵ بکرێت.",
+            delete_after=5
+        )
+        return False
+
+    # Bot itself cannot be targeted
+    if member.id == bot.user.id:
+        await ctx.send(
+            "❌ بۆتەکە ناتوانرێت ئەم کارەی لەگەڵ بکرێت.",
+            delete_after=5
+        )
+        return False
+
+    # Developer role is protected
+    developer_role = ctx.guild.get_role(DEVELOPER_ROLE_ID)
+
+    if developer_role and developer_role in member.roles:
+        await ctx.send(
+            "❌ ئەم کەسە ڕۆڵی Developer ـی هەیە و ناتوانرێت ئەم کارەی لەگەڵ بکرێت.",
+            delete_after=5
+        )
+        return False
+
+    # Bot's highest role
+    bot_member = ctx.guild.me
+
+    if bot_member is None:
+        await ctx.send(
+            "❌ بۆتەکە نەدۆزرایەوە.",
+            delete_after=5
+        )
+        return False
+
+    # Target must be below bot's highest role
+    if member.top_role >= bot_member.top_role:
+        await ctx.send(
+            "❌ ئەم کەسە ڕۆڵێکی یەکسان یان بەرزتری لە بۆتەکەی هەیە، ناتوانرێت ئەم کارەی لەگەڵ بکرێت.",
+            delete_after=5
+        )
+        return False
+
+    # User must have a higher role than target
+    if member.top_role >= ctx.author.top_role:
+        await ctx.send(
+            "❌ ڕۆڵت نزمتر یان یەکسانە لە ڕۆڵی ئەو کەسەی کە دەتەوێت ئەم کارەی لەگەڵ بکەیت.",
+            delete_after=5
+        )
+        return False
+
+    return True
+
+
+# KICK
 @bot.command()
-@commands.has_permissions(manage_messages=True)
-async def mute(ctx, member: discord.Member):
-    await ctx.channel.set_permissions(
-        member,
-        send_messages=False
-    )
+@commands.has_permissions(kick_members=True)
+async def kik(ctx, member: discord.Member = None):
 
-    msg = await ctx.send(
-        f"🔇 {member.mention} muted."
-    )
+    member = await get_target(ctx, member)
 
-    await msg.delete(delay=5)
+    if not await check_target(ctx, member):
+        return
 
+    try:
+        await member.kick(
+            reason=f"Kicked by {ctx.author}"
+        )
 
-# UNMUTE
-@bot.command()
-@commands.has_permissions(manage_messages=True)
-async def unmute(ctx, member: discord.Member):
-    await ctx.channel.set_permissions(
-        member,
-        overwrite=None
-    )
+        try:
+            await ctx.message.delete()
+        except:
+            pass
 
-    msg = await ctx.send(
-        f"🔊 {member.mention} unmuted."
-    )
+        msg = await ctx.send(
+            f"👢 {member.mention} kicked."
+        )
 
-    await msg.delete(delay=5)
+        await msg.delete(delay=5)
+
+    except discord.Forbidden:
+        await ctx.send(
+            "❌ بۆتەکە ناتوانێت ئەم کەسە Kick بکات.",
+            delete_after=5
+        )
 
 
 # BAN
@@ -164,17 +255,37 @@ async def unmute(ctx, member: discord.Member):
 @commands.has_permissions(ban_members=True)
 async def ban(
     ctx,
-    member: discord.Member,
+    member: discord.Member = None,
     *,
     reason="No reason provided"
 ):
-    await member.ban(reason=reason)
 
-    msg = await ctx.send(
-        f"🔨 {member.mention} banned.\nReason: {reason}"
-    )
+    member = await get_target(ctx, member)
 
-    await msg.delete(delay=5)
+    if not await check_target(ctx, member):
+        return
+
+    try:
+        await member.ban(
+            reason=reason
+        )
+
+        try:
+            await ctx.message.delete()
+        except:
+            pass
+
+        msg = await ctx.send(
+            f"🔨 {member.mention} banned.\nReason: {reason}"
+        )
+
+        await msg.delete(delay=5)
+
+    except discord.Forbidden:
+        await ctx.send(
+            "❌ بۆتەکە ناتوانێت ئەم کەسە Ban بکات.",
+            delete_after=5
+        )
 
 
 # UNBAN
@@ -195,6 +306,74 @@ async def unban(ctx, user_id: int):
     except discord.NotFound:
         await ctx.send(
             "❌ User not found or not banned.",
+            delete_after=5
+        )
+
+
+# MUTE
+@bot.command()
+@commands.has_permissions(manage_channels=True)
+async def mute(ctx, member: discord.Member = None):
+
+    member = await get_target(ctx, member)
+
+    if not await check_target(ctx, member):
+        return
+
+    try:
+        await ctx.channel.set_permissions(
+            member,
+            send_messages=False
+        )
+
+        try:
+            await ctx.message.delete()
+        except:
+            pass
+
+        msg = await ctx.send(
+            f"🔇 {member.mention} muted."
+        )
+
+        await msg.delete(delay=5)
+
+    except discord.Forbidden:
+        await ctx.send(
+            "❌ بۆتەکە ناتوانێت ئەم کەسە Mute بکات.",
+            delete_after=5
+        )
+
+
+# UNMUTE
+@bot.command()
+@commands.has_permissions(manage_channels=True)
+async def unmute(ctx, member: discord.Member = None):
+
+    member = await get_target(ctx, member)
+
+    if not await check_target(ctx, member):
+        return
+
+    try:
+        await ctx.channel.set_permissions(
+            member,
+            send_messages=None
+        )
+
+        try:
+            await ctx.message.delete()
+        except:
+            pass
+
+        msg = await ctx.send(
+            f"🔊 {member.mention} unmuted."
+        )
+
+        await msg.delete(delay=5)
+
+    except discord.Forbidden:
+        await ctx.send(
+            "❌ بۆتەکە ناتوانێت ئەم کەسە Unmute بکات.",
             delete_after=5
         )
 
@@ -275,6 +454,7 @@ async def seuafraaaRyaaa(ctx):
 # DEVELOPER COLOR
 @bot.command()
 async def devcolor(ctx, color: str = None):
+
     developer_role = ctx.guild.get_role(
         DEVELOPER_ROLE_ID
     )
@@ -309,6 +489,7 @@ async def devcolor(ctx, color: str = None):
 
     try:
         new_color = discord.Colour.from_str(color)
+
     except ValueError:
         await ctx.send(
             "❌ ئەم Hex Color ـە دروست نییە.",
@@ -351,6 +532,7 @@ async def devcolor(ctx, color: str = None):
 
 # ROLE COLOR SYSTEM
 async def change_role_color(ctx, role_id, color):
+
     role = ctx.guild.get_role(role_id)
 
     if role is None:
@@ -376,6 +558,7 @@ async def change_role_color(ctx, role_id, color):
 
     try:
         new_color = discord.Colour.from_str(color)
+
     except ValueError:
         await ctx.send(
             "❌ ئەم Hex Color ـە دروست نییە.",
@@ -383,9 +566,9 @@ async def change_role_color(ctx, role_id, color):
         )
         return
 
-    # BOT ROLE HIERARCHY
     bot_member = ctx.guild.me
 
+    # Bot cannot edit its own role or roles above it
     if role >= bot_member.top_role:
         await ctx.send(
             "❌ بۆتەکە ناتوانێت ئەم ڕۆڵە بگۆڕێت.",
@@ -393,9 +576,8 @@ async def change_role_color(ctx, role_id, color):
         )
         return
 
-    # USER ROLE HIERARCHY
-    # User can change their own role and roles below it.
-    # User cannot change a role above their highest role.
+    # User can edit own role and roles below it
+    # User cannot edit roles above their highest role
     if role > ctx.author.top_role:
         await ctx.send(
             "❌ ڕۆڵت نزمترە لەو ڕۆڵەی کە دەتەوێت بیگۆڕیت.",
@@ -510,6 +692,7 @@ async def friendscolor(ctx, color: str = None):
 # ERROR HANDLER
 @bot.event
 async def on_command_error(ctx, error):
+
     if isinstance(error, commands.MissingPermissions):
         await ctx.send(
             "❌ تۆ دەسەڵاتی ئەم command ـەت نییە.",
@@ -518,7 +701,7 @@ async def on_command_error(ctx, error):
 
     elif isinstance(error, commands.MissingRequiredArgument):
         await ctx.send(
-            "❌ هەموو زانیارییە پێویستەکان بنووسە.",
+            "❌ تاگی بکە یان لەسەر پەیامی ئەو کەسە Reply بکە.",
             delete_after=5
         )
 
