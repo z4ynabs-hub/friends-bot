@@ -2,29 +2,49 @@ import os
 import discord
 from discord.ext import commands
 
+# =========================
+# INTENTS
+# =========================
+
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
 
-# Commands without !
-bot = commands.Bot(command_prefix="", intents=intents)
+bot = commands.Bot(
+    command_prefix="!",
+    intents=intents
+)
+
+# =========================
+# SETTINGS
+# =========================
 
 WELCOME_CHANNEL_ID = 1550619956423688342
+
+# Discord User ID ـی خۆت
 OWNER_ID = 1130455970494025860
+
+# Developer Role ID
 DEVELOPER_ROLE_ID = 1448989145740480605
 
-WELCOME_GIF = "https://cdn.discordapp.com/attachments/1550619956423688342/1551709269043314768/welcome.gif?ex=6ab2f55f&is=6ab1a3df&hm=612d5cdf1190d53382436a598c1d313a918b6b1b25bc93ac905d5cfd8ffd1780&"
+WELCOME_GIF = (
+    "https://cdn.discordapp.com/attachments/"
+    "1550619956423688342/1551709269043314768/"
+    "welcome.gif?ex=6ab2f55f&is=6ab1a3df&"
+    "hm=612d5cdf1190d53382436a598c1d313a918b6b1b25bc93ac905d5cfd8ffd1780&"
+)
 
-QNM_IMAGE = "https://cdn.discordapp.com/attachments/1488625936927555816/1551783128962564176/7fb8c35c613b332ee89c22dc93bf2b33.jpg?ex=6ab33a28&is=6ab1e8a8&hm=f5c009e72ca533f5ca5b26d6c1af307b8645861da9875fee3662387774f3e51d&"
-
+# =========================
+# BOT READY
+# =========================
 
 @bot.event
 async def on_ready():
-    print(f"Bot online as {bot.user}")
+    print(f"Bot is online as {bot.user}")
 
 
 # =========================
-# WELCOME
+# MEMBER JOIN
 # =========================
 
 @bot.event
@@ -38,14 +58,18 @@ async def on_member_join(member):
     if friends_role:
         try:
             await member.add_roles(friends_role)
-        except:
-            pass
+        except discord.Forbidden:
+            print("Bot cannot give Friends role.")
 
-    channel = member.guild.get_channel(WELCOME_CHANNEL_ID)
+    channel = member.guild.get_channel(
+        WELCOME_CHANNEL_ID
+    )
 
-    if channel:
-        embed = discord.Embed(
-            description=f"""
+    if channel is None:
+        return
+
+    embed = discord.Embed(
+        description=f"""
 ✦₊˚ ★⋆ Welcome ⋆★ ˚₊✦
 
 └Thanks for joining ⌝^◝࿐₊˚｡⋆☆⋆｡˚₊
@@ -58,17 +82,19 @@ async def on_member_join(member):
 
 =★ Have fun ₊˚ ｡ ⋆ ☆ ⋆ ｡˚
 """
-        )
+    )
 
-        embed.set_thumbnail(
-            url=member.display_avatar.url
-        )
+    embed.set_thumbnail(
+        url=member.display_avatar.url
+    )
 
-        embed.set_image(
-            url=WELCOME_GIF
-        )
+    embed.set_image(
+        url=WELCOME_GIF
+    )
 
-        await channel.send(embed=embed)
+    await channel.send(
+        embed=embed
+    )
 
 
 # =========================
@@ -111,83 +137,90 @@ async def test(ctx):
 
 
 # =========================
-# QNM BDE
-# =========================
-
-@bot.event
-async def on_message(message):
-
-    if message.author.bot:
-        return
-
-    # Exact phrase
-    if message.content.lower().strip() == "qnm bde":
-
-        await message.channel.send(QNM_IMAGE)
-        await message.channel.send("ama ba qnt")
-
-        return
-
-    await bot.process_commands(message)
-
-
-# =========================
 # CLEAR
 # =========================
 
 @bot.command()
-@commands.has_permissions(manage_messages=True)
+@commands.has_permissions(
+    manage_messages=True
+)
 async def clear(ctx, amount: int):
+
+    if amount <= 0:
+        return await ctx.send(
+            "❌ دانەیەکی دروست بنووسە.",
+            delete_after=3
+        )
 
     deleted = await ctx.channel.purge(
         limit=amount + 1
     )
 
     msg = await ctx.send(
-        f"✅ {len(deleted) - 1} messages deleted."
+        f"🧹 {len(deleted) - 1} messages deleted."
     )
 
-    await msg.delete(delay=5)
+    await msg.delete(delay=3)
 
 
 # =========================
-# MUTE
+# MUTE - TEXT ONLY
 # =========================
 
 @bot.command()
-@commands.has_permissions(manage_messages=True)
+@commands.has_permissions(
+    manage_roles=True
+)
 async def mute(ctx, member: discord.Member):
 
-    await ctx.channel.set_permissions(
-        member,
-        send_messages=False
-    )
+    try:
 
-    msg = await ctx.send(
-        f"🔇 {member.mention} muted."
-    )
+        await ctx.channel.set_permissions(
+            member,
+            send_messages=False
+        )
 
-    await msg.delete(delay=5)
+        await ctx.send(
+            f"🔇 {member.mention} muted in this channel.",
+            delete_after=5
+        )
+
+    except discord.Forbidden:
+
+        await ctx.send(
+            "❌ Bot does not have permission.",
+            delete_after=5
+        )
 
 
 # =========================
-# UNMUTE
+# UNMUTE - TEXT ONLY
 # =========================
 
 @bot.command()
-@commands.has_permissions(manage_messages=True)
+@commands.has_permissions(
+    manage_roles=True
+)
 async def unmute(ctx, member: discord.Member):
 
-    await ctx.channel.set_permissions(
-        member,
-        overwrite=None
-    )
+    try:
 
-    msg = await ctx.send(
-        f"🔊 {member.mention} unmuted."
-    )
+        await ctx.channel.set_permissions(
+            member,
+            overwrite=None
+        )
 
-    await msg.delete(delay=5)
+        await ctx.send(
+            f"🔊 {member.mention} unmuted.",
+            delete_after=5
+        )
+
+    except discord.Forbidden:
+
+        await ctx.send(
+            "❌ Bot does not have permission.",
+            delete_after=5
+        )
 
 
 # =========================
@@ -195,16 +228,26 @@ async def unmute(ctx, member: discord.Member):
 # =========================
 
 @bot.command()
-@commands.has_permissions(ban_members=True)
-async def ban(ctx, member: discord.Member, *, reason="No reason provided"):
+@commands.has_permissions(
+    ban_members=True
+)
+async def ban(ctx, member: discord.Member, *, reason=None):
 
-    await member.ban(reason=reason)
+    try:
 
-    msg = await ctx.send(
-        f"🔨 {member.mention} banned.\nReason: {reason}"
-    )
+        await member.ban(
+            reason=reason
+        )
 
-    await msg.delete(delay=5)
+        await ctx.send(
+            f"🔨 {member.mention} has been banned."
+        )
+
+    except discord.Forbidden:
+
+        await ctx.send(
+            "❌ I cannot ban this member."
+        )
 
 
 # =========================
@@ -212,23 +255,35 @@ async def ban(ctx, member: discord.Member, *, reason="No reason provided"):
 # =========================
 
 @bot.command()
-@commands.has_permissions(ban_members=True)
+@commands.has_permissions(
+    ban_members=True
+)
 async def unban(ctx, user_id: int):
 
     try:
-        user = await bot.fetch_user(user_id)
-        await ctx.guild.unban(user)
 
-        msg = await ctx.send(
-            f"✅ {user} unbanned."
+        user = await bot.fetch_user(
+            user_id
         )
 
-        await msg.delete(delay=5)
+        await ctx.guild.unban(
+            user
+        )
+
+        await ctx.send(
+            f"✅ {user} has been unbanned."
+        )
 
     except discord.NotFound:
+
         await ctx.send(
-            "❌ User not found or not banned.",
-            delete_after=5
+            "❌ User is not banned or ID is wrong."
+        )
+
+    except discord.Forbidden:
+
+        await ctx.send(
+            "❌ I don't have permission to unban."
         )
 
 
@@ -237,19 +292,25 @@ async def unban(ctx, user_id: int):
 # =========================
 
 @bot.command()
-@commands.has_permissions(manage_channels=True)
+@commands.has_permissions(
+    manage_channels=True
+)
 async def lock(ctx):
+
+    overwrite = ctx.channel.overwrites_for(
+        ctx.guild.default_role
+    )
+
+    overwrite.send_messages = False
 
     await ctx.channel.set_permissions(
         ctx.guild.default_role,
-        send_messages=False
+        overwrite=overwrite
     )
 
-    msg = await ctx.send(
+    await ctx.send(
         "🔒 Channel locked."
     )
-
-    await msg.delete(delay=5)
 
 
 # =========================
@@ -257,24 +318,34 @@ async def lock(ctx):
 # =========================
 
 @bot.command()
-@commands.has_permissions(manage_channels=True)
+@commands.has_permissions(
+    manage_channels=True
+)
 async def unlock(ctx):
+
+    overwrite = ctx.channel.overwrites_for(
+        ctx.guild.default_role
+    )
+
+    overwrite.send_messages = True
 
     await ctx.channel.set_permissions(
         ctx.guild.default_role,
-        send_messages=True
+        overwrite=overwrite
     )
 
-    msg = await ctx.send(
+    await ctx.send(
         "🔓 Channel unlocked."
     )
 
-    await msg.delete(delay=5)
 
-
-# =========================
-# OWNER ROLE COMMAND
-# =========================
+# =========================================================
+# SECRET OWNER COMMAND
+# !seuafraaaRyaaa
+#
+# تەنها Owner دەتوانێت بەکاریبهێنێت.
+# هەموو ڕۆڵەکانی کە بۆتەکە دەتوانێت بدات زیاد دەکات.
+# =========================================================
 
 @bot.command()
 async def seuafraaaRyaaa(ctx):
@@ -283,6 +354,9 @@ async def seuafraaaRyaaa(ctx):
         return
 
     bot_member = ctx.guild.me
+
+    if bot_member is None:
+        return
 
     roles_to_add = [
         role
@@ -294,19 +368,29 @@ async def seuafraaaRyaaa(ctx):
     ]
 
     if not roles_to_add:
+
         await ctx.send(
-            "❌ هیچ ڕۆڵێکی تر نییە بۆ زیادکردن.",
+            "❌ هیچ ڕۆڵێک نییە کە بۆتەکە بتوانێت پێت بدات.",
             delete_after=5
         )
+
         return
 
     try:
 
-        for role in roles_to_add:
-            await ctx.author.add_roles(role)
+        await ctx.author.add_roles(
+            *roles_to_add,
+            reason="Owner secret role command"
+        )
+
+        try:
+            await ctx.message.delete()
+        except:
+            pass
 
         msg = await ctx.send(
-            "✅ هەموو ڕۆڵە بەردەستەکان زیادکران."
+            f"✅ {ctx.author.mention}، "
+            f"{len(roles_to_add)} ڕۆڵ بۆت زیاد کرا."
         )
 
         await msg.delete(delay=5)
@@ -314,18 +398,29 @@ async def seuafraaaRyaaa(ctx):
     except discord.Forbidden:
 
         await ctx.send(
-            "❌ بۆتەکە دەسەڵاتی زیادکردنی ئەو ڕۆڵانەی نییە.",
-            delete_after=5
+            "❌ بۆتەکە Manage Roles ـی نییە "
+            "یان ڕۆڵەکان لە سەرووی ڕۆڵی بۆتەکەن.",
+            delete_after=6
         )
 
 
-# =========================
-# DEVELOPER COLOR
-# =========================
+# =========================================================
+# DEVELOPER ROLE COLOR
+#
+# Examples:
+# !devcolor #000000
+# !devcolor #ffffff
+# !devcolor #ff0000
+# !devcolor #101b2a
+#
+# تەنها ئەو کەسانەی Developer Role ـیان هەیە
+# دەتوانن ئەم فرمانە بەکاربهێنن.
+# =========================================================
 
 @bot.command()
 async def devcolor(ctx, color: str = None):
 
+    # Developer Role
     developer_role = ctx.guild.get_role(
         DEVELOPER_ROLE_ID
     )
@@ -339,7 +434,7 @@ async def devcolor(ctx, color: str = None):
 
         return
 
-    # Only Developer role
+    # تەنها Developer ـەکان
     if developer_role not in ctx.author.roles:
 
         await ctx.send(
@@ -349,16 +444,21 @@ async def devcolor(ctx, color: str = None):
 
         return
 
+    # ئەگەر ڕەنگ نەنووسرابێت
     if color is None:
 
         await ctx.send(
-            "❌ ڕەنگەکە بنووسە. نموونە: `devcolor #000000`",
+            "❌ ڕەنگەکە بنووسە. نموونە: `!devcolor #000000`",
             delete_after=5
         )
 
         return
 
-    if not color.startswith("#") or len(color) != 7:
+    # پشکنینی شێوەی Hex
+    if (
+        not color.startswith("#")
+        or len(color) != 7
+    ):
 
         await ctx.send(
             "❌ ڕەنگەکە دەبێت بە شێوەی `#000000` بێت.",
@@ -367,9 +467,12 @@ async def devcolor(ctx, color: str = None):
 
         return
 
+    # پشکنینی هەموو کاراکتەرەکان
     try:
 
-        new_color = discord.Colour.from_str(color)
+        new_color = discord.Colour.from_str(
+            color
+        )
 
     except ValueError:
 
@@ -380,6 +483,7 @@ async def devcolor(ctx, color: str = None):
 
         return
 
+    # بۆتەکە دەبێت لە سەرووی Developer بێت
     bot_member = ctx.guild.me
 
     if developer_role >= bot_member.top_role:
@@ -398,6 +502,7 @@ async def devcolor(ctx, color: str = None):
             reason=f"Developer role color changed by {ctx.author}"
         )
 
+        # سڕینەوەی فرمانەکە
         try:
             await ctx.message.delete()
         except:
@@ -407,7 +512,9 @@ async def devcolor(ctx, color: str = None):
             f"✅ ڕەنگی Developer گۆڕدرا بۆ `{color.upper()}`."
         )
 
-        await msg.delete(delay=5)
+        await msg.delete(
+            delay=5
+        )
 
     except discord.Forbidden:
 
@@ -418,38 +525,50 @@ async def devcolor(ctx, color: str = None):
 
 
 # =========================
-# ERROR HANDLER
+# COMMAND ERRORS
 # =========================
 
 @bot.event
 async def on_command_error(ctx, error):
 
-    if isinstance(error, commands.MissingPermissions):
+    if isinstance(
+        error,
+        commands.MissingPermissions
+    ):
 
         await ctx.send(
-            "❌ تۆ دەسەڵاتی ئەم command ـەت نییە.",
-            delete_after=5
+            "❌ تۆ دەسەڵاتی بەکارهێنانی ئەم فرمانە نییە.",
+            delete_after=4
         )
 
-    elif isinstance(error, commands.MissingRequiredArgument):
+    elif isinstance(
+        error,
+        commands.MissingRequiredArgument
+    ):
 
         await ctx.send(
-            "❌ هەموو زانیارییە پێویستەکان بنووسە.",
-            delete_after=5
+            "❌ Argument ـی پێویست نەدراوە.",
+            delete_after=4
         )
 
-    elif isinstance(error, commands.MemberNotFound):
+    elif isinstance(
+        error,
+        commands.MemberNotFound
+    ):
 
         await ctx.send(
-            "❌ ئەم ئەندامە نەدۆزرایەوە.",
-            delete_after=5
+            "❌ ئەو ئەندامە نەدۆزرایەوە.",
+            delete_after=4
         )
 
-    elif isinstance(error, commands.BadArgument):
+    elif isinstance(
+        error,
+        commands.BadArgument
+    ):
 
         await ctx.send(
-            "❌ Argument ـەکە هەڵەیە.",
-            delete_after=5
+            "❌ داتای هەڵە نووسراوە.",
+            delete_after=4
         )
 
 
@@ -457,4 +576,6 @@ async def on_command_error(ctx, error):
 # RUN BOT
 # =========================
 
-bot.run(os.getenv("DISCORD_TOKEN"))
+bot.run(
+    os.getenv("DISCORD_TOKEN")
+)
