@@ -36,7 +36,6 @@ async def on_member_join(member):
                 f"{member.mention}\n\n"
                 "ơೃ࿐ --- ⋆ #rules ⋆ ---\n"
                 "ơೃ࿐ --- ⋆ #FriendsZone ⋆ ---\n"
-                "ơೃ࿐ --- ⋆ #Fraa-Seuii-Ryaa⋆ ---\n\n"
                 "=★ Have fun ₊˚ ｡ ⋆ ☆ ⋆ ｡˚"
             )
 
@@ -86,7 +85,6 @@ async def on_message(message):
                 f"{message.author.mention}\n\n"
                 "ơೃ࿐ --- ⋆ #rules ⋆ ---\n"
                 "ơೃ࿐ --- ⋆ #FriendsZone ⋆ ---\n"
-                "ơೃ࿐ --- ⋆ #Fraa-Seuii-Ryaa ⋆ ---\n\n"
                 "=★ Have fun ₊˚ ｡ ⋆ ☆ ⋆ ｡˚ (Test)"
             )
 
