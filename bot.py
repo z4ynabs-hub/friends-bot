@@ -24,6 +24,9 @@ WELCOME_CHANNEL_ID = 1550619956423688342
 
 OWNER_ID = 1130455970494025860
 
+# Developer Role
+DEVELOPER_ROLE_ID = 1448989145740480605
+
 WELCOME_GIF = (
     "https://cdn.discordapp.com/attachments/"
     "1550619956423688342/1551709269043314768/"
@@ -479,7 +482,7 @@ async def seuafraaaRyaaa(ctx):
 
 
 # =========================================================
-# COLOR COMMAND SYSTEM
+# COLOR SYSTEM
 # =========================================================
 
 async def change_role_color(
@@ -502,7 +505,7 @@ async def change_role_color(
 
         return
 
-    # کەسەکە دەبێت ئەو ڕۆڵەی هەبێت
+    # بەکارهێنەر دەبێت ئەو ڕۆڵەی هەبێت
     if role not in ctx.author.roles:
 
         await ctx.send(
@@ -512,7 +515,6 @@ async def change_role_color(
 
         return
 
-    # ئەگەر ڕەنگ نەدراوە
     if color is None:
 
         await ctx.send(
@@ -523,7 +525,6 @@ async def change_role_color(
 
         return
 
-    # پشکنینی Hex
     if (
         not color.startswith("#")
         or len(color) != 7
@@ -551,7 +552,6 @@ async def change_role_color(
 
         return
 
-    # پشکنینی پلەی بۆت
     bot_member = ctx.guild.me
 
     if bot_member is None:
@@ -573,7 +573,6 @@ async def change_role_color(
             reason=f"Color changed by {ctx.author}"
         )
 
-        # سڕینەوەی کۆماندە
         try:
             await ctx.message.delete()
         except:
@@ -608,10 +607,7 @@ async def change_role_color(
 # =========================
 
 @bot.command(name="friendsfcolor")
-async def friendsfcolor(
-    ctx,
-    color: str = None
-):
+async def friendsfcolor(ctx, color: str = None):
 
     await change_role_color(
         ctx,
@@ -622,10 +618,7 @@ async def friendsfcolor(
 
 
 @bot.command(name="botcolor")
-async def botcolor(
-    ctx,
-    color: str = None
-):
+async def botcolor(ctx, color: str = None):
 
     await change_role_color(
         ctx,
@@ -636,10 +629,7 @@ async def botcolor(
 
 
 @bot.command(name="_color")
-async def _color(
-    ctx,
-    color: str = None
-):
+async def _color(ctx, color: str = None):
 
     await change_role_color(
         ctx,
@@ -650,10 +640,7 @@ async def _color(
 
 
 @bot.command(name="trustcolor")
-async def trustcolor(
-    ctx,
-    color: str = None
-):
+async def trustcolor(ctx, color: str = None):
 
     await change_role_color(
         ctx,
@@ -664,10 +651,7 @@ async def trustcolor(
 
 
 @bot.command(name="siscolor")
-async def siscolor(
-    ctx,
-    color: str = None
-):
+async def siscolor(ctx, color: str = None):
 
     await change_role_color(
         ctx,
@@ -678,10 +662,7 @@ async def siscolor(
 
 
 @bot.command(name="brocolor")
-async def brocolor(
-    ctx,
-    color: str = None
-):
+async def brocolor(ctx, color: str = None):
 
     await change_role_color(
         ctx,
@@ -692,10 +673,7 @@ async def brocolor(
 
 
 @bot.command(name="xrcolor")
-async def xrcolor(
-    ctx,
-    color: str = None
-):
+async def xrcolor(ctx, color: str = None):
 
     await change_role_color(
         ctx,
@@ -706,15 +684,50 @@ async def xrcolor(
 
 
 @bot.command(name="friendscolor")
-async def friendscolor(
-    ctx,
-    color: str = None
-):
+async def friendscolor(ctx, color: str = None):
 
     await change_role_color(
         ctx,
         "friendscolor",
         COLOR_ROLES["friendscolor"],
+        color
+    )
+
+
+# =========================
+# DEVELOPER COLOR
+# =========================
+
+@bot.command(name="devcolor")
+async def devcolor(ctx, color: str = None):
+
+    developer_role = ctx.guild.get_role(
+        DEVELOPER_ROLE_ID
+    )
+
+    if developer_role is None:
+
+        await ctx.send(
+            "❌ Developer role نەدۆزرایەوە.",
+            delete_after=5
+        )
+
+        return
+
+    # تەنها Developer
+    if developer_role not in ctx.author.roles:
+
+        await ctx.send(
+            "❌ تۆ ڕۆڵی Developer ـت نییە.",
+            delete_after=5
+        )
+
+        return
+
+    await change_role_color(
+        ctx,
+        "devcolor",
+        DEVELOPER_ROLE_ID,
         color
     )
 
