@@ -446,7 +446,7 @@ async def devcolor(ctx):
 
         await role.edit(
             colour=discord.Colour.from_str(
-                "#101b2a"
+                "#000000"
             ),
             reason="Developer role color change"
         )
