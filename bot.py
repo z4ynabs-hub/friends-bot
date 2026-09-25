@@ -34,6 +34,7 @@ TIMEOUT_MUTE_LOG_ID = 1448989225826386045
 JOIN_LEFT_LOG_ID = 1448989227156111370
 CHANNEL_LOGS_ID = 1448989228548493414
 BAN_UNBAN_KICK_LOG_ID = 1448989230524141599
+MESSAGE_LOGS_ID = 1448989232411574272
 
 WELCOME_GIF = (
     "https://cdn.discordapp.com/attachments/"
@@ -86,7 +87,6 @@ async def on_ready():
 
 @bot.event
 async def on_member_join(member):
-    # Friends Role
     friends_role = discord.utils.get(member.guild.roles, name="Friends")
     if friends_role:
         try:
@@ -94,7 +94,6 @@ async def on_member_join(member):
         except discord.Forbidden:
             print("Bot cannot give Friends role.")
 
-    # Welcome Message
     channel = member.guild.get_channel(WELCOME_CHANNEL_ID)
     if channel:
         embed = discord.Embed(
@@ -114,7 +113,6 @@ async def on_member_join(member):
         except:
             pass
 
-    # Join-Left Log
     log_embed = discord.Embed(
         title="📥 ئەندامێکی نوێ هاتە ژوورەوە",
         color=discord.Color.green(),
@@ -142,6 +140,28 @@ async def on_member_remove(member):
 
 
 # =========================
+# MESSAGE DELETE LOG
+# =========================
+
+@bot.event
+async def on_message_delete(message):
+    if message.author.bot or not message.guild:
+        return
+
+    embed = discord.Embed(
+        title="🗑️ نامەیەک سڕایەوە",
+        color=discord.Color.red(),
+        timestamp=datetime.datetime.utcnow()
+    )
+    embed.add_field(name="نوسەری نامە", value=f"{message.author.mention} (`{message.author}`)", inline=False)
+    embed.add_field(name="کەناڵ", value=message.channel.mention, inline=False)
+    if message.content:
+        embed.add_field(name="دەقی نامە", value=message.content[:1024], inline=False)
+    
+    await send_log(message.guild, MESSAGE_LOGS_ID, embed)
+
+
+# =========================
 # VOICE STATE LOG
 # =========================
 
@@ -158,19 +178,19 @@ async def on_voice_state_update(member, before, after):
 
     if before.channel is None and after.channel is not None:
         log_embed.title = "🎙️ چوە ژوورەوە بۆ ڤۆیس"
-        log_embed.description=f"{member.mention} چوە ناو کەناڵی ڤۆیسی {after.channel.mention}"
+        log_embed.description = f"{member.mention} چوە ناو کەناڵی ڤۆیسی {after.channel.mention}"
     elif before.channel is not None and after.channel is None:
         log_embed.title = "🔇 ڤۆیسی جێهێشت"
-        log_embed.description=f"{member.mention} لە کەناڵی ڤۆیسی {before.channel.mention} دەرچوو"
+        log_embed.description = f"{member.mention} لە کەناڵی ڤۆیسی {before.channel.mention} دەرچوو"
     elif before.channel != after.channel:
         log_embed.title = "🔄 گواستنەوەی ڤۆیس"
-        log_embed.description=f"{member.mention} لە {before.channel.mention} چوە ناو {after.channel.mention}"
+        log_embed.description = f"{member.mention} لە {before.channel.mention} چوە ناو {after.channel.mention}"
 
     await send_log(member.guild, VOICE_LOGS_ID, log_embed)
 
 
 # =========================
-# CHANNEL LOGS
+# CHANNEL & ROLE LOGS
 # =========================
 
 @bot.event
@@ -192,11 +212,6 @@ async def on_guild_channel_delete(channel):
         timestamp=datetime.datetime.utcnow()
     )
     await send_log(channel.guild, CHANNEL_LOGS_ID, embed)
-
-
-# =========================
-# ROLE LOGS (Create / Delete / Update)
-# =========================
 
 @bot.event
 async def on_guild_role_create(role):
@@ -245,152 +260,162 @@ async def test(ctx):
 
 
 # =========================
-# CLEAR
+# SAFIKA (CLEAR)
 # =========================
 
 @bot.command()
-@commands.has_permissions(manage_messages=True)
-async def clear(ctx, amount: int):
-    if amount <= 0:
-        return await ctx.send("❌ دانەیەکی دروست بنووسە.", delete_after=3)
-    deleted = await ctx.channel.purge(limit=amount + 1)
-    msg = await ctx.send(f"🧹 {len(deleted) - 1} messages deleted.")
-    await msg.delete(delay=3)
+async def safika(ctx, amount: int = None):
+    if not ctx.author.guild_permissions.administrator:
+        return await ctx.send(f"❌ {ctx.author.mention} تەنها ئەدمین دەتوانێت ئەم کۆماندە بەکاربهێنێت.", delete_after=5)
+
+    if amount is None or amount <= 0:
+        return await ctx.send("❌ نموونە: `Safika 1000`", delete_after=5)
+
+    amount = min(amount, 1000)
+
+    try:
+        deleted = await ctx.channel.purge(limit=amount + 1, bulk=True)
+        await ctx.channel.send(f"✅ `{len(deleted) - 1}` نامە سڕایەوە.", delete_after=3)
+    except discord.Forbidden:
+        await ctx.send("❌ بۆتەکە دەسەڵاتی سڕینەوەی نامەی نییە.", delete_after=5)
+    except Exception as e:
+        print(f"Safika error: {e}")
 
 
 # =========================
-# MUTE & UNMUTE (Target Support & Log)
+# GET TARGET HELPER
 # =========================
 
-async def get_target(ctx):
-    member = None
-    if ctx.message.mentions:
-        member = ctx.message.mentions[0]
-    elif ctx.message.reference:
+async def get_target(message):
+    if message.mentions:
+        member = message.mentions[0]
+        if isinstance(member, discord.Member):
+            return member
+
+    if message.reference:
         try:
-            ref_msg = await ctx.channel.fetch_message(ctx.message.reference.message_id)
-            member = ref_msg.author
+            ref_msg = await message.channel.fetch_message(message.reference.message_id)
+            if isinstance(ref_msg.author, discord.Member):
+                return ref_msg.author
+            member = message.guild.get_member(ref_msg.author.id)
+            return member
         except:
             pass
-    if isinstance(member, discord.User):
-        member = ctx.guild.get_member(member.id)
-    return member
+    return None
+
+
+# =========================
+# MUTE & UNMUTE
+# =========================
 
 @bot.command()
-@commands.has_permissions(manage_roles=True)
 async def mute(ctx, member: discord.Member = None):
+    if not ctx.author.guild_permissions.administrator:
+        return await ctx.send(f"❌ {ctx.author.mention} تەنها ئەدمین دەتوانێت Mute بەکاربهێنێت.", delete_after=5)
+
     if member is None:
-        member = await get_target(ctx)
+        member = await get_target(ctx.message)
 
     if not isinstance(member, discord.Member):
-        return await ctx.send("❌ تکایە ئاماژە بە ئەندامێک بکە یان ڕیپلەی بکە.", delete_after=5)
+        return await ctx.send("❌ کەسێک Tag بکە یان Reply ـی نامەکەی بکە و بنووسە `Mute`.", delete_after=5)
 
     try:
         await ctx.channel.set_permissions(member, send_messages=False)
-        await ctx.send(f"🔇 {member.mention} muted in this channel.", delete_after=5)
         try:
             await ctx.message.delete()
         except:
             pass
+        await ctx.send(f"damt daxaa {member.mention}", delete_after=2)
 
-        # Log
         embed = discord.Embed(title="🔇 مۆتکرا (Mute)", color=discord.Color.orange(), timestamp=datetime.datetime.utcnow())
         embed.add_field(name="ئەندام", value=member.mention, inline=False)
         embed.add_field(name="لەلایەن", value=ctx.author.mention, inline=False)
         await send_log(ctx.guild, TIMEOUT_MUTE_LOG_ID, embed)
-
-    except discord.Forbidden:
-        await ctx.send("❌ Bot does not have permission.", delete_after=5)
+    except Exception as e:
+        print(f"Mute error: {e}")
 
 
 @bot.command()
-@commands.has_permissions(manage_roles=True)
 async def unmute(ctx, member: discord.Member = None):
+    if not ctx.author.guild_permissions.administrator:
+        return await ctx.send(f"❌ {ctx.author.mention} تەنها ئەدمین دەتوانێت Unmute بەکاربهێنێت.", delete_after=5)
+
     if member is None:
-        member = await get_target(ctx)
+        member = await get_target(ctx.message)
 
     if not isinstance(member, discord.Member):
-        return await ctx.send("❌ تکایە ئاماژە بە ئەندامێک بکە یان ڕیپلەی بکە.", delete_after=5)
+        return await ctx.send("❌ کەسێک Tag بکە یان Reply ـی بکە و بنووسە `Unmute`.", delete_after=5)
 
     try:
         await ctx.channel.set_permissions(member, overwrite=None)
-        await ctx.send(f"🔊 {member.mention} unmuted.", delete_after=5)
         try:
             await ctx.message.delete()
         except:
             pass
+        await ctx.send(f"xwa xerm bnwse dllm basha aqllba amjara {member.mention}", delete_after=2)
 
-        # Log
         embed = discord.Embed(title="🔊 لادانی مۆت (Unmute)", color=discord.Color.green(), timestamp=datetime.datetime.utcnow())
         embed.add_field(name="ئەندام", value=member.mention, inline=False)
         embed.add_field(name="لەلایەن", value=ctx.author.mention, inline=False)
         await send_log(ctx.guild, TIMEOUT_MUTE_LOG_ID, embed)
-
-    except discord.Forbidden:
-        await ctx.send("❌ Bot does not have permission.", delete_after=5)
+    except Exception as e:
+        print(f"Unmute error: {e}")
 
 
 # =========================
-# BAN / UNBAN / KICK
+# BFRA (BAN) & UNBAN
 # =========================
 
 @bot.command()
-@commands.has_permissions(ban_members=True)
-async def ban(ctx, member: discord.Member = None, *, reason=None):
+async def bfra(ctx, member: discord.Member = None, *, reason=None):
+    if not ctx.author.guild_permissions.administrator:
+        return await ctx.send(f"❌ {ctx.author.mention} تەنها ئەدمین دەتوانێت Bfra بەکاربهێنێت.", delete_after=5)
+
     if member is None:
-        member = await get_target(ctx)
+        member = await get_target(ctx.message)
 
     if not isinstance(member, discord.Member):
-        return await ctx.send("❌ تکایە کەسێک دیاری بکە بۆ بان کردن.", delete_after=5)
+        return await ctx.send("❌ کەسێک Tag بکە یان Reply ـی بکە و بنووسە `Bfra`.", delete_after=5)
 
     try:
         await member.ban(reason=reason)
-        await ctx.send(f"🔨 {member.mention} has been banned.")
-        
-        embed = discord.Embed(title="🔨 بنکردن (Ban)", color=discord.Color.red(), timestamp=datetime.datetime.utcnow())
+        try:
+            await ctx.message.delete()
+        except:
+            pass
+        await ctx.send(f"✈️ Frenra {member.mention}", delete_after=2)
+
+        embed = discord.Embed(title="✈️ بنکردن (Bfra)", color=discord.Color.red(), timestamp=datetime.datetime.utcnow())
         embed.add_field(name="ئەندام", value=member.mention, inline=False)
         embed.add_field(name="لەلایەن", value=ctx.author.mention, inline=False)
-        embed.add_field(name="هۆکار", value=reason or "نییە", inline=False)
         await send_log(ctx.guild, BAN_UNBAN_KICK_LOG_ID, embed)
-    except discord.Forbidden:
-        await ctx.send("❌ I cannot ban this member.")
+    except Exception as e:
+        print(f"Bfra error: {e}")
 
 
 @bot.command()
-@commands.has_permissions(ban_members=True)
-async def unban(ctx, user_id: int):
+async def unban(ctx, user_id: int = None):
+    if not ctx.author.guild_permissions.administrator:
+        return await ctx.send(f"❌ {ctx.author.mention} تەنها ئەدمین دەتوانێت Unban بەکاربهێنێت.", delete_after=5)
+
+    if user_id is None:
+        return await ctx.send("❌ ID ـی بەکارهێنەر بنووسە.", delete_after=5)
+
     try:
         user = await bot.fetch_user(user_id)
         await ctx.guild.unban(user)
-        await ctx.send(f"✅ {user} has been unbanned.")
+        try:
+            await ctx.message.delete()
+        except:
+            pass
+        await ctx.send(f"✅ {user.mention} Unban کرا.", delete_after=3)
 
         embed = discord.Embed(title="✅ لادانی بن (Unban)", color=discord.Color.green(), timestamp=datetime.datetime.utcnow())
         embed.add_field(name="بەکارهێنەر", value=str(user), inline=False)
         embed.add_field(name="لەلایەن", value=ctx.author.mention, inline=False)
         await send_log(ctx.guild, BAN_UNBAN_KICK_LOG_ID, embed)
-    except:
-        await ctx.send("❌ User is not banned or ID is wrong.")
-
-
-@bot.command()
-@commands.has_permissions(kick_members=True)
-async def kick(ctx, member: discord.Member = None, *, reason=None):
-    if member is None:
-        member = await get_target(ctx)
-
-    if not isinstance(member, discord.Member):
-        return await ctx.send("❌ تکایە کەسێک دیاری بکە بۆ کیک کردن.", delete_after=5)
-
-    try:
-        await member.kick(reason=reason)
-        await ctx.send(f"👢 {member.mention} kicked.")
-
-        embed = discord.Embed(title="👢 دەرکردن (Kick)", color=discord.Color.orange(), timestamp=datetime.datetime.utcnow())
-        embed.add_field(name="ئەندام", value=member.mention, inline=False)
-        embed.add_field(name="لەلایەن", value=ctx.author.mention, inline=False)
-        await send_log(ctx.guild, BAN_UNBAN_KICK_LOG_ID, embed)
-    except:
-        await ctx.send("❌ I cannot kick this member.")
+    except Exception as e:
+        print(f"Unban error: {e}")
 
 
 # =========================
@@ -485,7 +510,6 @@ async def change_role_color(ctx, command_name, role_id, color):
         msg = await ctx.send(f"✅ ڕەنگی `{command_name}` گۆڕدرا بۆ `{color.upper()}`.")
         await msg.delete(delay=5)
 
-        # Log to edit-role log
         embed = discord.Embed(title="🎨 گۆڕینی ڕەنگی ڕۆڵ", color=new_color, timestamp=datetime.datetime.utcnow())
         embed.add_field(name="ڕۆڵ", value=role.mention, inline=False)
         embed.add_field(name="بەکارهێنەر", value=ctx.author.mention, inline=False)
@@ -535,20 +559,6 @@ async def devcolor(ctx, color: str = None):
     if developer_role not in ctx.author.roles:
         return await ctx.send("❌ تۆ ڕۆڵی Developer ـت نییە.", delete_after=5)
     await change_role_color(ctx, "devcolor", DEVELOPER_ROLE_ID, color)
-
-
-# =========================
-# COMMAND ERRORS
-# =========================
-
-@bot.event
-async def on_command_error(ctx, error):
-    if isinstance(error, commands.MissingPermissions):
-        await ctx.send("❌ تۆ دەسەڵاتی بەکارهێنانی ئەم فرمانە نییە.", delete_after=4)
-    elif isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send("❌ Argument ـی پێویست نەدراوە.", delete_after=4)
-    elif isinstance(error, commands.MemberNotFound):
-        await ctx.send("❌ ئەو ئەندامە نەدۆزرایەوە.", delete_after=4)
 
 
 # =========================
