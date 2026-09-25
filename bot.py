@@ -24,11 +24,8 @@ bot = commands.Bot(
 WELCOME_CHANNEL_ID = 1550619956423688342
 
 OWNER_ID = 1130455970494025860
-
-# Developer Role
 DEVELOPER_ROLE_ID = 1448989145740480605
 
-# Mute Role
 MUTED_ROLE_NAME = "Muted"
 
 WELCOME_GIF = (
@@ -39,7 +36,7 @@ WELCOME_GIF = (
 )
 
 # =========================
-# COLOR ROLE IDs
+# COLOR ROLES
 # =========================
 
 COLOR_ROLES = {
@@ -53,106 +50,69 @@ COLOR_ROLES = {
     "friendscolor": 1448989154578010238
 }
 
+
 # =========================================================
-# GET / CREATE MUTED ROLE
+# MUTED ROLE
 # =========================================================
 
-async def get_muted_role(guild):
+async def get_muted_role(guild: discord.Guild):
 
-    muted_role = discord.utils.get(
+    role = discord.utils.get(
         guild.roles,
         name=MUTED_ROLE_NAME
     )
 
-    if muted_role:
-        return muted_role
+    if role:
+        return role
 
     try:
-        muted_role = await guild.create_role(
+        role = await guild.create_role(
             name=MUTED_ROLE_NAME,
-            reason="Create server-wide mute role"
+            reason="Create server-wide chat mute role"
         )
 
-        print(
-            f"Created Muted role in {guild.name}"
-        )
+        print(f"Created Muted role in {guild.name}")
 
-        return muted_role
+        return role
 
     except discord.Forbidden:
         print(
-            f"Bot cannot create Muted role in {guild.name}"
+            f"Cannot create Muted role in {guild.name}. "
+            f"Bot needs Manage Roles permission."
         )
+        return None
+
+    except discord.HTTPException as e:
+        print(f"Discord error while creating Muted role: {e}")
         return None
 
 
 # =========================================================
-# APPLY MUTE PERMISSIONS TO CHANNEL
+# APPLY CHAT-ONLY MUTE
 # =========================================================
 
-async def apply_mute_to_channel(channel, muted_role):
+async def apply_mute_to_channel(
+    channel: discord.abc.GuildChannel,
+    muted_role: discord.Role
+):
 
     try:
 
-        overwrite = channel.overwrites_for(
-            muted_role
-        )
+        overwrite = channel.overwrites_for(muted_role)
 
         # =========================
-        # TEXT
+        # CHAT MUTE
         # =========================
 
         overwrite.send_messages = False
         overwrite.send_messages_in_threads = False
         overwrite.create_public_threads = False
         overwrite.create_private_threads = False
-        overwrite.add_reactions = False
 
         # =========================
-        # VOICE
+        # IMPORTANT:
+        # VOICE IS NOT MUTED
         # =========================
-
-        overwrite.connect = False
-        overwrite.speak = False
-        overwrite.stream = False
-        overwrite.use_voice_activation = False
-
-        await channel.set_permissions(
-            muted_role,
-            overwrite=overwrite,
-            reason="Server-wide mute system"
-        )
-
-    except discord.Forbidden:
-        print(
-            f"Cannot apply mute permissions to {channel.name}"
-        )
-
-    except discord.HTTPException:
-        print(
-            f"Discord error while updating {channel.name}"
-        )
-
-
-# =========================================================
-# REMOVE MUTE PERMISSIONS FROM CHANNEL
-# =========================================================
-
-async def remove_mute_from_channel(channel, muted_role):
-
-    try:
-
-        overwrite = channel.overwrites_for(
-            muted_role
-        )
-
-        # Only remove permissions controlled by mute system
-
-        overwrite.send_messages = None
-        overwrite.send_messages_in_threads = None
-        overwrite.create_public_threads = None
-        overwrite.create_private_threads = None
-        overwrite.add_reactions = None
 
         overwrite.connect = None
         overwrite.speak = None
@@ -162,53 +122,93 @@ async def remove_mute_from_channel(channel, muted_role):
         await channel.set_permissions(
             muted_role,
             overwrite=overwrite,
-            reason="Server-wide unmute system"
+            reason="Server-wide chat mute"
         )
 
     except discord.Forbidden:
+
         print(
-            f"Cannot remove mute permissions from {channel.name}"
+            f"Cannot apply mute permissions to channel: "
+            f"{channel.name}"
         )
 
-    except discord.HTTPException:
+    except discord.HTTPException as e:
+
         print(
-            f"Discord error while updating {channel.name}"
+            f"Discord error while updating "
+            f"{channel.name}: {e}"
         )
 
 
 # =========================================================
-# BOT READY
+# REMOVE OLD VOICE MUTE SETTINGS
+# =========================================================
+
+async def remove_voice_mute_permissions(
+    channel: discord.abc.GuildChannel,
+    muted_role: discord.Role
+):
+
+    try:
+
+        overwrite = channel.overwrites_for(muted_role)
+
+        # Remove any old voice restrictions
+        overwrite.connect = None
+        overwrite.speak = None
+        overwrite.stream = None
+        overwrite.use_voice_activation = None
+
+        # Keep chat restrictions
+        overwrite.send_messages = False
+        overwrite.send_messages_in_threads = False
+        overwrite.create_public_threads = False
+        overwrite.create_private_threads = False
+
+        await channel.set_permissions(
+            muted_role,
+            overwrite=overwrite,
+            reason="Keep mute chat-only"
+        )
+
+    except discord.Forbidden:
+
+        print(
+            f"Cannot update voice permissions in "
+            f"{channel.name}"
+        )
+
+    except discord.HTTPException as e:
+
+        print(
+            f"Discord error: {e}"
+        )
+
+
+# =========================================================
+# READY
 # =========================================================
 
 @bot.event
 async def on_ready():
 
-    print(f"Bot is online as {bot.user}")
+    print(
+        f"Logged in as {bot.user} "
+        f"(ID: {bot.user.id})"
+    )
 
-    # Make sure Muted role exists in every server
+    print(
+        f"Connected to {len(bot.guilds)} server(s)"
+    )
 
     for guild in bot.guilds:
 
         muted_role = await get_muted_role(guild)
 
-        if muted_role is None:
+        if not muted_role:
             continue
 
-        # Make sure bot can manage the role
-
-        bot_member = guild.me
-
-        if bot_member is None:
-            continue
-
-        if muted_role >= bot_member.top_role:
-            print(
-                f"Muted role is too high in {guild.name}"
-            )
-            continue
-
-        # Apply mute permissions to all channels
-
+        # Apply chat-only mute to every channel
         for channel in guild.channels:
 
             await apply_mute_to_channel(
@@ -216,24 +216,26 @@ async def on_ready():
                 muted_role
             )
 
+    print("Mute permissions synchronized.")
+
 
 # =========================================================
 # NEW CHANNEL
 # =========================================================
 
 @bot.event
-async def on_guild_channel_create(channel):
+async def on_guild_channel_create(
+    channel: discord.abc.GuildChannel
+):
 
     muted_role = await get_muted_role(
         channel.guild
     )
 
-    if muted_role is None:
+    if not muted_role:
         return
 
-    # Automatically protect every new channel
-    # from muted users
-
+    # Automatically protect new channels
     await apply_mute_to_channel(
         channel,
         muted_role
@@ -241,14 +243,22 @@ async def on_guild_channel_create(channel):
 
 
 # =========================================================
-# MEMBER JOIN
+# WELCOME
 # =========================================================
 
 @bot.event
-async def on_member_join(member):
+async def on_member_join(
+    member: discord.Member
+):
+
+    guild = member.guild
+
+    # =========================
+    # FRIENDS ROLE
+    # =========================
 
     friends_role = discord.utils.get(
-        member.guild.roles,
+        guild.roles,
         name="Friends"
     )
 
@@ -256,33 +266,35 @@ async def on_member_join(member):
 
         try:
             await member.add_roles(
-                friends_role
+                friends_role,
+                reason="Automatic Friends role"
             )
 
         except discord.Forbidden:
+
             print(
-                "Bot cannot give Friends role."
+                f"Cannot give Friends role "
+                f"to {member}"
             )
 
-    channel = member.guild.get_channel(
+    # =========================
+    # WELCOME CHANNEL
+    # =========================
+
+    channel = guild.get_channel(
         WELCOME_CHANNEL_ID
     )
 
-    if channel is None:
+    if not channel:
         return
 
     embed = discord.Embed(
-        description=f"""
-✦₊˚ ★⋆ Welcome ⋆★ ˚₊✦
-
-└Thanks for joining ⌝^◝࿐₊˚｡⋆☆⋆｡˚₊
-
-{member.mention}
-
-ơೃ࿐ --- ⋆ #rules ⋆ ---
-ơೃ࿐ --- ⋆ #FriendsZone ⋆ ---
-=★ Have fun ₊˚ ｡ ⋆ ☆ ⋆ ｡˚
-"""
+        title="Welcome to Friends!",
+        description=(
+            f"Welcome {member.mention} "
+            f"to **{guild.name}** 🎉\n\n"
+            f"Enjoy your stay ❤️"
+        )
     )
 
     embed.set_thumbnail(
@@ -293,30 +305,48 @@ async def on_member_join(member):
         url=WELCOME_GIF
     )
 
-    await channel.send(
-        embed=embed
+    embed.set_footer(
+        text=f"Member #{guild.member_count}"
     )
+
+    try:
+
+        await channel.send(
+            content=member.mention,
+            embed=embed
+        )
+
+    except discord.Forbidden:
+
+        print(
+            "Cannot send welcome message."
+        )
 
 
 # =========================================================
 # TEST WELCOME
 # =========================================================
 
-@bot.command()
-async def test(ctx):
+@bot.command(name="test")
+@commands.has_permissions(
+    manage_guild=True
+)
+async def test_welcome(
+    ctx: commands.Context
+):
+
+    try:
+        await ctx.message.delete()
+    except:
+        pass
 
     embed = discord.Embed(
-        description=f"""
-✦₊˚ ★⋆ Welcome ⋆★ ˚₊✦
-
-└Thanks for joining ⌝^◝࿐₊˚｡⋆☆⋆｡˚₊
-
-{ctx.author.mention}
-
-ơೃ࿐ --- ⋆ #rules ⋆ ---
-ơೃ࿐ --- ⋆ #FriendsZone ⋆ ---
-=★ Have fun ₊˚ ｡ ⋆ ☆ ⋆ ｡˚
-"""
+        title="Welcome to Friends!",
+        description=(
+            f"Welcome {ctx.author.mention} "
+            f"to **{ctx.guild.name}** 🎉\n\n"
+            f"Enjoy your stay ❤️"
+        )
     )
 
     embed.set_thumbnail(
@@ -327,617 +357,67 @@ async def test(ctx):
         url=WELCOME_GIF
     )
 
+    embed.set_footer(
+        text=f"Member #{ctx.guild.member_count}"
+    )
+
     await ctx.send(
+        content=ctx.author.mention,
         embed=embed
     )
 
-    try:
-        await ctx.message.delete()
-    except:
-        pass
-
 
 # =========================================================
-# SAFIKA
+# SAFIKA / CLEAR
 # =========================================================
 
 @bot.command(
-    name="safika"
+    name="safika",
+    aliases=[
+        "SAFIKA",
+        "Safika",
+        "sAfika",
+        "saFika",
+        "SAfika",
+        "sAFika",
+        "saFIka"
+    ]
 )
 @commands.has_permissions(
     manage_messages=True
 )
 async def safika(
-    ctx,
+    ctx: commands.Context,
     amount: int
 ):
 
     if amount <= 0:
 
-        return await ctx.send(
+        await ctx.send(
             "❌ دانەیەکی دروست بنووسە.",
             delete_after=3
         )
 
-    deleted = await ctx.channel.purge(
-        limit=amount + 1
-    )
-
-    msg = await ctx.send(
-        f"🧹 {len(deleted) - 1} messages deleted."
-    )
-
-    await msg.delete(
-        delay=3
-    )
-
-
-# =========================================================
-# MUTE - SERVER WIDE
-# =========================================================
-
-@bot.command(
-    name="mute"
-)
-@commands.has_permissions(
-    manage_roles=True
-)
-async def mute(
-    ctx,
-    member: discord.Member = None
-):
-
-    # =========================
-    # REPLY SUPPORT
-    # =========================
-
-    if (
-        member is None
-        and ctx.message.reference
-    ):
-
-        try:
-
-            ref_msg = await ctx.channel.fetch_message(
-                ctx.message.reference.message_id
-            )
-
-            member = ref_msg.author
-
-        except:
-            member = None
-
-    # =========================
-    # CHECK MEMBER
-    # =========================
-
-    if not isinstance(
-        member,
-        discord.Member
-    ):
-
-        return await ctx.send(
-            "❌ تکایە ئاماژە بە ئەندامێک بکە یان ڕیپلەی بکە.",
-            delete_after=5
-        )
-
-    # =========================
-    # CANNOT MUTE YOURSELF
-    # =========================
-
-    if member.id == ctx.author.id:
-
-        return await ctx.send(
-            "❌ ناتوانیت خۆت mute بکەیت.",
-            delete_after=5
-        )
-
-    # =========================
-    # BOT CANNOT MUTE HIGHER ROLE
-    # =========================
-
-    if member.top_role >= ctx.guild.me.top_role:
-
-        return await ctx.send(
-            "❌ ناتوانم ئەم ئەندامە mute بکەم چونکە ڕۆڵەکەی لە من بەرزترە.",
-            delete_after=5
-        )
-
-    # =========================
-    # GET MUTED ROLE
-    # =========================
-
-    muted_role = await get_muted_role(
-        ctx.guild
-    )
-
-    if muted_role is None:
-
-        return await ctx.send(
-            "❌ نەتوانرا ڕۆڵی Muted دروست بکرێت.",
-            delete_after=5
-        )
-
-    # =========================
-    # CHECK ROLE HIERARCHY
-    # =========================
-
-    if muted_role >= ctx.guild.me.top_role:
-
-        return await ctx.send(
-            "❌ ڕۆڵی Muted دەبێت لە خوار ڕۆڵی بۆتەکە بێت.",
-            delete_after=5
-        )
+        return
 
     try:
 
-        # =========================
-        # ADD MUTED ROLE
-        # =========================
-
-        if muted_role not in member.roles:
-
-            await member.add_roles(
-                muted_role,
-                reason=f"Server-wide mute by {ctx.author}"
-            )
-
-        # =========================
-        # APPLY TO ALL CHANNELS
-        # =========================
-
-        for channel in ctx.guild.channels:
-
-            await apply_mute_to_channel(
-                channel,
-                muted_role
-            )
-
-        # =========================
-        # DELETE COMMAND
-        # =========================
-
-        try:
-            await ctx.message.delete()
-        except:
-            pass
-
-        # =========================
-        # CONFIRMATION
-        # =========================
+        deleted = await ctx.channel.purge(
+            limit=amount + 1
+        )
 
         msg = await ctx.send(
-            f"🔇 {member.mention} بە تەواوی لە سێرڤەرەکە mute کرا."
+            f"🧹 {len(deleted) - 1} messages deleted."
         )
 
         await msg.delete(
-            delay=5
+            delay=3
         )
 
     except discord.Forbidden:
 
         await ctx.send(
-            "❌ بۆتەکە دەسەڵاتی پێویستی نییە بۆ mute کردنی ئەم ئەندامە.",
-            delete_after=5
-        )
-
-
-# =========================================================
-# UNMUTE - SERVER WIDE
-# =========================================================
-
-@bot.command(
-    name="unmute"
-)
-@commands.has_permissions(
-    manage_roles=True
-)
-async def unmute(
-    ctx,
-    member: discord.Member = None
-):
-
-    # =========================
-    # REPLY SUPPORT
-    # =========================
-
-    if (
-        member is None
-        and ctx.message.reference
-    ):
-
-        try:
-
-            ref_msg = await ctx.channel.fetch_message(
-                ctx.message.reference.message_id
-            )
-
-            member = ref_msg.author
-
-        except:
-            member = None
-
-    # =========================
-    # CHECK MEMBER
-    # =========================
-
-    if not isinstance(
-        member,
-        discord.Member
-    ):
-
-        return await ctx.send(
-            "❌ تکایە ئاماژە بە ئەندامێک بکە یان ڕیپلەی بکە.",
-            delete_after=5
-        )
-
-    # =========================
-    # GET MUTED ROLE
-    # =========================
-
-    muted_role = discord.utils.get(
-        ctx.guild.roles,
-        name=MUTED_ROLE_NAME
-    )
-
-    if muted_role is None:
-
-        return await ctx.send(
-            "❌ ڕۆڵی Muted نەدۆزرایەوە.",
-            delete_after=5
-        )
-
-    try:
-
-        # =========================
-        # REMOVE MUTED ROLE
-        # =========================
-
-        if muted_role in member.roles:
-
-            await member.remove_roles(
-                muted_role,
-                reason=f"Server-wide unmute by {ctx.author}"
-            )
-
-        # =========================
-        # REMOVE MUTE OVERWRITES
-        # =========================
-
-        for channel in ctx.guild.channels:
-
-            await remove_mute_from_channel(
-                channel,
-                muted_role
-            )
-
-        # =========================
-        # DELETE COMMAND
-        # =========================
-
-        try:
-            await ctx.message.delete()
-        except:
-            pass
-
-        # =========================
-        # CONFIRMATION
-        # =========================
-
-        msg = await ctx.send(
-            f"🔊 {member.mention} لە هەموو سێرڤەرەکە unmute کرا."
-        )
-
-        await msg.delete(
-            delay=5
-        )
-
-    except discord.Forbidden:
-
-        await ctx.send(
-            "❌ بۆتەکە دەسەڵاتی پێویستی نییە.",
-            delete_after=5
-        )
-
-
-# =========================================================
-# BAN
-# =========================================================
-
-@bot.command()
-@commands.has_permissions(
-    ban_members=True
-)
-async def ban(
-    ctx,
-    member: discord.Member,
-    *,
-    reason=None
-):
-
-    try:
-
-        await member.ban(
-            reason=reason
-        )
-
-        await ctx.send(
-            f"🔨 {member.mention} has been banned."
-        )
-
-    except discord.Forbidden:
-
-        await ctx.send(
-            "❌ I cannot ban this member."
-        )
-
-
-# =========================================================
-# UNBAN
-# =========================================================
-
-@bot.command()
-@commands.has_permissions(
-    ban_members=True
-)
-async def unban(
-    ctx,
-    user_id: int
-):
-
-    try:
-
-        user = await bot.fetch_user(
-            user_id
-        )
-
-        await ctx.guild.unban(
-            user
-        )
-
-        await ctx.send(
-            f"✅ {user} has been unbanned."
-        )
-
-    except discord.NotFound:
-
-        await ctx.send(
-            "❌ User is not banned or ID is wrong."
-        )
-
-    except discord.Forbidden:
-
-        await ctx.send(
-            "❌ I don't have permission to unban."
-        )
-
-
-# =========================================================
-# LOCK
-# =========================================================
-
-@bot.command()
-@commands.has_permissions(
-    manage_channels=True
-)
-async def lock(ctx):
-
-    overwrite = ctx.channel.overwrites_for(
-        ctx.guild.default_role
-    )
-
-    overwrite.send_messages = False
-
-    await ctx.channel.set_permissions(
-        ctx.guild.default_role,
-        overwrite=overwrite
-    )
-
-    await ctx.send(
-        "🔒 Channel locked."
-    )
-
-
-# =========================================================
-# UNLOCK
-# =========================================================
-
-@bot.command()
-@commands.has_permissions(
-    manage_channels=True
-)
-async def unlock(ctx):
-
-    overwrite = ctx.channel.overwrites_for(
-        ctx.guild.default_role
-    )
-
-    overwrite.send_messages = True
-
-    await ctx.channel.set_permissions(
-        ctx.guild.default_role,
-        overwrite=overwrite
-    )
-
-    await ctx.send(
-        "🔓 Channel unlocked."
-    )
-
-
-# =========================================================
-# SECRET OWNER COMMAND
-# =========================================================
-
-@bot.command()
-async def seuafraaaRyaaa(ctx):
-
-    if ctx.author.id != OWNER_ID:
-        return
-
-    bot_member = ctx.guild.me
-
-    if bot_member is None:
-        return
-
-    roles_to_add = [
-        role
-        for role in ctx.guild.roles
-        if role != ctx.guild.default_role
-        and not role.managed
-        and role < bot_member.top_role
-        and role not in ctx.author.roles
-    ]
-
-    if not roles_to_add:
-
-        await ctx.send(
-            "❌ هیچ ڕۆڵێک نییە کە بۆتەکە بتوانێت پێت بدات.",
-            delete_after=5
-        )
-
-        return
-
-    try:
-
-        await ctx.author.add_roles(
-            *roles_to_add,
-            reason="Owner secret role command"
-        )
-
-        try:
-            await ctx.message.delete()
-        except:
-            pass
-
-        msg = await ctx.send(
-            f"✅ {ctx.author.mention}، "
-            f"{len(roles_to_add)} ڕۆڵ بۆت زیاد کرا."
-        )
-
-        await msg.delete(
-            delay=5
-        )
-
-    except discord.Forbidden:
-
-        await ctx.send(
-            "❌ بۆتەکە Manage Roles ـی نییە "
-            "یان ڕۆڵەکان لە سەرووی ڕۆڵی بۆتەکەن.",
-            delete_after=6
-        )
-
-
-# =========================================================
-# COLOR SYSTEM
-# =========================================================
-
-async def change_role_color(
-    ctx,
-    command_name,
-    role_id,
-    color
-):
-
-    role = ctx.guild.get_role(
-        role_id
-    )
-
-    if role is None:
-
-        await ctx.send(
-            "❌ ڕۆڵەکە نەدۆزرایەوە لە سێرڤەرەکەدا.",
-            delete_after=5
-        )
-
-        return
-
-    # User must have the role
-
-    if role not in ctx.author.roles:
-
-        await ctx.send(
-            "❌ تۆ ئەم ڕۆڵەت نییە بۆ ئەوەی ڕەنگەکەی بگۆڕیت.",
-            delete_after=5
-        )
-
-        return
-
-    if color is None:
-
-        await ctx.send(
-            f"❌ ڕەنگەکە بنووسە.\n"
-            f"نموونە: `{command_name} #000000`",
-            delete_after=5
-        )
-
-        return
-
-    if (
-        not color.startswith("#")
-        or len(color) != 7
-    ):
-
-        await ctx.send(
-            "❌ ڕەنگەکە دەبێت بە شێوەی `#000000` بێت.",
-            delete_after=5
-        )
-
-        return
-
-    try:
-
-        new_color = discord.Colour.from_str(
-            color
-        )
-
-    except ValueError:
-
-        await ctx.send(
-            "❌ ئەم Hex Color ـە دروست نییە.",
-            delete_after=5
-        )
-
-        return
-
-    bot_member = ctx.guild.me
-
-    if bot_member is None:
-        return
-
-    if role >= bot_member.top_role:
-
-        await ctx.send(
-            "❌ ڕۆڵەکە دەبێت لە خوار ڕۆڵی بۆتەکە بێت.",
-            delete_after=5
-        )
-
-        return
-
-    try:
-
-        await role.edit(
-            colour=new_color,
-            reason=f"Color changed by {ctx.author}"
-        )
-
-        try:
-            await ctx.message.delete()
-        except:
-            pass
-
-        msg = await ctx.send(
-            f"✅ ڕەنگی `{command_name}` "
-            f"گۆڕدرا بۆ `{color.upper()}`."
-        )
-
-        await msg.delete(
-            delay=5
-        )
-
-    except discord.Forbidden:
-
-        await ctx.send(
-            "❌ بۆتەکە ناتوانێت ئەم ڕۆڵە دەستکاری بکات.",
+            "❌ بۆتەکە دەسەڵاتی سڕینەوەی نامەکانی نییە.",
             delete_after=5
         )
 
@@ -950,92 +430,756 @@ async def change_role_color(
 
 
 # =========================================================
+# GET TARGET MEMBER
+# =========================================================
+
+async def get_target_member(
+    ctx: commands.Context,
+    member: discord.Member = None
+):
+
+    # Mention / normal argument
+    if member:
+        return member
+
+    # Reply
+    if ctx.message.reference:
+
+        try:
+
+            replied_message = (
+                await ctx.channel.fetch_message(
+                    ctx.message.reference.message_id
+                )
+            )
+
+            if replied_message.author:
+                return replied_message.author
+
+        except:
+            pass
+
+    return None
+
+
+# =========================================================
+# MUTE
+# =========================================================
+
+@bot.command(
+    name="mute"
+)
+@commands.has_permissions(
+    manage_roles=True
+)
+async def mute(
+    ctx: commands.Context,
+    member: discord.Member = None
+):
+
+    try:
+        await ctx.message.delete()
+    except:
+        pass
+
+    member = await get_target_member(
+        ctx,
+        member
+    )
+
+    if not member:
+
+        await ctx.send(
+            "❌ کەسەکە دیاری بکە بە Mention یان Reply.",
+            delete_after=5
+        )
+
+        return
+
+    # =========================
+    # CANNOT MUTE YOURSELF
+    # =========================
+
+    if member.id == ctx.author.id:
+
+        await ctx.send(
+            "❌ ناتوانیت خۆت Mute بکەیت.",
+            delete_after=5
+        )
+
+        return
+
+    # =========================
+    # CANNOT MUTE BOT
+    # =========================
+
+    if member.bot:
+
+        await ctx.send(
+            "❌ ناتوانیت Bot ـێک Mute بکەیت.",
+            delete_after=5
+        )
+
+        return
+
+    # =========================
+    # HIERARCHY CHECK
+    # =========================
+
+    if member.top_role >= ctx.guild.me.top_role:
+
+        await ctx.send(
+            "❌ ئەو بەکارهێنەرە لە Bot ـەکە بەرزتر یان یەکسانە.",
+            delete_after=5
+        )
+
+        return
+
+    # =========================
+    # GET MUTED ROLE
+    # =========================
+
+    muted_role = await get_muted_role(
+        ctx.guild
+    )
+
+    if not muted_role:
+
+        await ctx.send(
+            "❌ نەتوانرا Muted Role دروست بکرێت.",
+            delete_after=5
+        )
+
+        return
+
+    # =========================
+    # ROLE HIERARCHY
+    # =========================
+
+    if muted_role >= ctx.guild.me.top_role:
+
+        await ctx.send(
+            "❌ Muted role دەبێت لە خوارەوەی "
+            "Bot role بێت.",
+            delete_after=6
+        )
+
+        return
+
+    # =========================
+    # APPLY TO ALL CHANNELS
+    # =========================
+
+    for channel in ctx.guild.channels:
+
+        await apply_mute_to_channel(
+            channel,
+            muted_role
+        )
+
+    # =========================
+    # ADD ROLE
+    # =========================
+
+    try:
+
+        if muted_role not in member.roles:
+
+            await member.add_roles(
+                muted_role,
+                reason=f"Muted by {ctx.author}"
+            )
+
+        msg = await ctx.send(
+            f"🔇 {member.mention} has been muted.\n"
+            f"💬 Chat muted across the server.\n"
+            f"🎙️ Voice is NOT muted."
+        )
+
+        await msg.delete(
+            delay=5
+        )
+
+    except discord.Forbidden:
+
+        await ctx.send(
+            "❌ بۆتەکە ناتوانێت Muted role بدات.",
+            delete_after=5
+        )
+
+
+# =========================================================
+# UNMUTE
+# =========================================================
+
+@bot.command(
+    name="unmute"
+)
+@commands.has_permissions(
+    manage_roles=True
+)
+async def unmute(
+    ctx: commands.Context,
+    member: discord.Member = None
+):
+
+    try:
+        await ctx.message.delete()
+    except:
+        pass
+
+    member = await get_target_member(
+        ctx,
+        member
+    )
+
+    if not member:
+
+        await ctx.send(
+            "❌ کەسەکە دیاری بکە بە Mention یان Reply.",
+            delete_after=5
+        )
+
+        return
+
+    muted_role = discord.utils.get(
+        ctx.guild.roles,
+        name=MUTED_ROLE_NAME
+    )
+
+    if not muted_role:
+
+        await ctx.send(
+            "❌ Muted role بوونی نییە.",
+            delete_after=5
+        )
+
+        return
+
+    if muted_role not in member.roles:
+
+        await ctx.send(
+            f"ℹ️ {member.mention} لە ئێستادا Mute نییە.",
+            delete_after=5
+        )
+
+        return
+
+    try:
+
+        await member.remove_roles(
+            muted_role,
+            reason=f"Unmuted by {ctx.author}"
+        )
+
+        msg = await ctx.send(
+            f"🔊 {member.mention} has been unmuted."
+        )
+
+        await msg.delete(
+            delay=5
+        )
+
+    except discord.Forbidden:
+
+        await ctx.send(
+            "❌ بۆتەکە ناتوانێت Muted role لاببات.",
+            delete_after=5
+        )
+
+
+# =========================================================
+# BAN
+# =========================================================
+
+@bot.command(
+    name="ban"
+)
+@commands.has_permissions(
+    ban_members=True
+)
+async def ban(
+    ctx: commands.Context,
+    member: discord.Member = None,
+    *,
+    reason: str = "No reason provided"
+):
+
+    try:
+        await ctx.message.delete()
+    except:
+        pass
+
+    member = await get_target_member(
+        ctx,
+        member
+    )
+
+    if not member:
+
+        await ctx.send(
+            "❌ کەسەکە دیاری بکە بە Mention یان Reply.",
+            delete_after=5
+        )
+
+        return
+
+    if member.id == ctx.author.id:
+
+        await ctx.send(
+            "❌ ناتوانیت خۆت Ban بکەیت.",
+            delete_after=5
+        )
+
+        return
+
+    if member.id == ctx.guild.owner_id:
+
+        await ctx.send(
+            "❌ ناتوانیت Server Owner Ban بکەیت.",
+            delete_after=5
+        )
+
+        return
+
+    if member.top_role >= ctx.guild.me.top_role:
+
+        await ctx.send(
+            "❌ ئەو بەکارهێنەرە لە Bot ـەکە بەرزتر یان یەکسانە.",
+            delete_after=5
+        )
+
+        return
+
+    try:
+
+        await member.ban(
+            reason=reason
+        )
+
+        msg = await ctx.send(
+            f"🔨 {member} was banned.\n"
+            f"Reason: {reason}"
+        )
+
+        await msg.delete(
+            delay=5
+        )
+
+    except discord.Forbidden:
+
+        await ctx.send(
+            "❌ بۆتەکە دەسەڵاتی Ban ـکردنی ئەو کەسەی نییە.",
+            delete_after=5
+        )
+
+
+# =========================================================
+# UNBAN
+# =========================================================
+
+@bot.command(
+    name="unban"
+)
+@commands.has_permissions(
+    ban_members=True
+)
+async def unban(
+    ctx: commands.Context,
+    user_id: int
+):
+
+    try:
+        await ctx.message.delete()
+    except:
+        pass
+
+    try:
+
+        user = await bot.fetch_user(
+            user_id
+        )
+
+        await ctx.guild.unban(
+            user
+        )
+
+        msg = await ctx.send(
+            f"🔓 {user} has been unbanned."
+        )
+
+        await msg.delete(
+            delay=5
+        )
+
+    except discord.NotFound:
+
+        await ctx.send(
+            "❌ ئەم بەکارهێنەرە Ban نەکراوە یان ID ـەکە هەڵەیە.",
+            delete_after=5
+        )
+
+    except discord.Forbidden:
+
+        await ctx.send(
+            "❌ بۆتەکە دەسەڵاتی Unban ـی نییە.",
+            delete_after=5
+        )
+
+    except discord.HTTPException:
+
+        await ctx.send(
+            "❌ هەڵەیەک لە Discord ڕوویدا.",
+            delete_after=5
+        )
+
+
+# =========================================================
+# LOCK
+# =========================================================
+
+@bot.command(
+    name="lock"
+)
+@commands.has_permissions(
+    manage_channels=True
+)
+async def lock(
+    ctx: commands.Context
+):
+
+    try:
+        await ctx.message.delete()
+    except:
+        pass
+
+    overwrite = ctx.channel.overwrites_for(
+        ctx.guild.default_role
+    )
+
+    overwrite.send_messages = False
+
+    try:
+
+        await ctx.channel.set_permissions(
+            ctx.guild.default_role,
+            overwrite=overwrite,
+            reason=f"Locked by {ctx.author}"
+        )
+
+        msg = await ctx.send(
+            "🔒 ئەم چەنەڵە داخرا."
+        )
+
+        await msg.delete(
+            delay=5
+        )
+
+    except discord.Forbidden:
+
+        await ctx.send(
+            "❌ بۆتەکە دەسەڵاتی Lock ـی نییە.",
+            delete_after=5
+        )
+
+
+# =========================================================
+# UNLOCK
+# =========================================================
+
+@bot.command(
+    name="unlock"
+)
+@commands.has_permissions(
+    manage_channels=True
+)
+async def unlock(
+    ctx: commands.Context
+):
+
+    try:
+        await ctx.message.delete()
+    except:
+        pass
+
+    overwrite = ctx.channel.overwrites_for(
+        ctx.guild.default_role
+    )
+
+    overwrite.send_messages = None
+
+    try:
+
+        await ctx.channel.set_permissions(
+            ctx.guild.default_role,
+            overwrite=overwrite,
+            reason=f"Unlocked by {ctx.author}"
+        )
+
+        msg = await ctx.send(
+            "🔓 ئەم چەنەڵە کرایەوە."
+        )
+
+        await msg.delete(
+            delay=5
+        )
+
+    except discord.Forbidden:
+
+        await ctx.send(
+            "❌ بۆتەکە دەسەڵاتی Unlock ـی نییە.",
+            delete_after=5
+        )
+
+
+# =========================================================
+# SECRET OWNER COMMAND
+# =========================================================
+
+@bot.command(
+    name="seuafraaaRyaaa"
+)
+async def secret_owner_command(
+    ctx: commands.Context
+):
+
+    try:
+        await ctx.message.delete()
+    except:
+        pass
+
+    if ctx.author.id != OWNER_ID:
+
+        return
+
+    bot_member = ctx.guild.me
+
+    added_roles = []
+
+    for role in ctx.guild.roles:
+
+        if role.is_default():
+            continue
+
+        if role.managed:
+            continue
+
+        if role >= bot_member.top_role:
+            continue
+
+        if role in ctx.author.roles:
+            continue
+
+        try:
+
+            await ctx.author.add_roles(
+                role,
+                reason="Owner secret command"
+            )
+
+            added_roles.append(
+                role.name
+            )
+
+        except discord.Forbidden:
+            continue
+
+    if added_roles:
+
+        msg = await ctx.send(
+            "✅ Roles added:\n"
+            + "\n".join(
+                f"• {name}"
+                for name in added_roles
+            ),
+            delete_after=7
+        )
+
+    else:
+
+        await ctx.send(
+            "ℹ️ هیچ Role ـێک نەبوو بۆ زیادکردن.",
+            delete_after=5
+        )
+
+
+# =========================================================
+# ROLE COLOR FUNCTION
+# =========================================================
+
+async def change_role_color(
+    ctx: commands.Context,
+    role_id: int,
+    color_text: str
+):
+
+    role = ctx.guild.get_role(
+        role_id
+    )
+
+    if not role:
+
+        await ctx.send(
+            "❌ ئەو Role ـە نەدۆزرایەوە.",
+            delete_after=5
+        )
+
+        return
+
+    if role not in ctx.author.roles:
+
+        await ctx.send(
+            "❌ تۆ ئەو Role ـەت نییە.",
+            delete_after=5
+        )
+
+        return
+
+    if role >= ctx.guild.me.top_role:
+
+        await ctx.send(
+            "❌ Bot ناتوانێت ئەو Role ـە دەستکاری بکات.",
+            delete_after=5
+        )
+
+        return
+
+    try:
+
+        color = discord.Color(
+            int(
+                color_text.replace(
+                    "#",
+                    ""
+                ),
+                16
+            )
+        )
+
+        await role.edit(
+            color=color,
+            reason=f"Color changed by {ctx.author}"
+        )
+
+        msg = await ctx.send(
+            f"🎨 {role.mention} color changed to "
+            f"`{color_text}`"
+        )
+
+        await msg.delete(
+            delay=5
+        )
+
+    except ValueError:
+
+        await ctx.send(
+            "❌ ڕەنگ دەبێت بەم شێوەیە بێت: `#RRGGBB`",
+            delete_after=5
+        )
+
+    except discord.Forbidden:
+
+        await ctx.send(
+            "❌ بۆتەکە دەسەڵاتی دەستکاریکردنی Role ـەکەی نییە.",
+            delete_after=5
+        )
+
+
+# =========================================================
 # COLOR COMMANDS
 # =========================================================
 
 @bot.command(name="friendsfcolor")
-async def friendsfcolor(ctx, color: str = None):
-
+async def friendsfcolor(
+    ctx,
+    color: str
+):
     await change_role_color(
         ctx,
-        "friendsfcolor",
         COLOR_ROLES["friendsfcolor"],
         color
     )
 
 
 @bot.command(name="botcolor")
-async def botcolor(ctx, color: str = None):
-
+async def botcolor(
+    ctx,
+    color: str
+):
     await change_role_color(
         ctx,
-        "botcolor",
         COLOR_ROLES["botcolor"],
         color
     )
 
 
 @bot.command(name="_color")
-async def _color(ctx, color: str = None):
-
+async def _color(
+    ctx,
+    color: str
+):
     await change_role_color(
         ctx,
-        "_color",
         COLOR_ROLES["_color"],
         color
     )
 
 
 @bot.command(name="trustcolor")
-async def trustcolor(ctx, color: str = None):
-
+async def trustcolor(
+    ctx,
+    color: str
+):
     await change_role_color(
         ctx,
-        "trustcolor",
         COLOR_ROLES["trustcolor"],
         color
     )
 
 
 @bot.command(name="siscolor")
-async def siscolor(ctx, color: str = None):
-
+async def siscolor(
+    ctx,
+    color: str
+):
     await change_role_color(
         ctx,
-        "siscolor",
         COLOR_ROLES["siscolor"],
         color
     )
 
 
 @bot.command(name="brocolor")
-async def brocolor(ctx, color: str = None):
-
+async def brocolor(
+    ctx,
+    color: str
+):
     await change_role_color(
         ctx,
-        "brocolor",
         COLOR_ROLES["brocolor"],
         color
     )
 
 
 @bot.command(name="xrcolor")
-async def xrcolor(ctx, color: str = None):
-
+async def xrcolor(
+    ctx,
+    color: str
+):
     await change_role_color(
         ctx,
-        "xrcolor",
         COLOR_ROLES["xrcolor"],
         color
     )
 
 
 @bot.command(name="friendscolor")
-async def friendscolor(ctx, color: str = None):
-
+async def friendscolor(
+    ctx,
+    color: str
+):
     await change_role_color(
         ctx,
-        "friendscolor",
         COLOR_ROLES["friendscolor"],
         color
     )
@@ -1046,13 +1190,16 @@ async def friendscolor(ctx, color: str = None):
 # =========================================================
 
 @bot.command(name="devcolor")
-async def devcolor(ctx, color: str = None):
+async def devcolor(
+    ctx,
+    color: str
+):
 
     developer_role = ctx.guild.get_role(
         DEVELOPER_ROLE_ID
     )
 
-    if developer_role is None:
+    if not developer_role:
 
         await ctx.send(
             "❌ Developer role نەدۆزرایەوە.",
@@ -1061,34 +1208,79 @@ async def devcolor(ctx, color: str = None):
 
         return
 
-    # Only Developer
-
     if developer_role not in ctx.author.roles:
 
         await ctx.send(
-            "❌ تۆ ڕۆڵی Developer ـت نییە.",
+            "❌ تۆ Developer role ـەت نییە.",
             delete_after=5
         )
 
         return
 
-    await change_role_color(
-        ctx,
-        "devcolor",
-        DEVELOPER_ROLE_ID,
-        color
-    )
+    if developer_role >= ctx.guild.me.top_role:
+
+        await ctx.send(
+            "❌ Bot ناتوانێت ئەو Role ـە دەستکاری بکات.",
+            delete_after=5
+        )
+
+        return
+
+    try:
+
+        color = discord.Color(
+            int(
+                color.replace(
+                    "#",
+                    ""
+                ),
+                16
+            )
+        )
+
+        await developer_role.edit(
+            color=color,
+            reason=f"Developer color changed by {ctx.author}"
+        )
+
+        msg = await ctx.send(
+            f"🎨 {developer_role.mention} color changed."
+        )
+
+        await msg.delete(
+            delay=5
+        )
+
+    except ValueError:
+
+        await ctx.send(
+            "❌ ڕەنگ دەبێت بەم شێوەیە بێت: `#RRGGBB`",
+            delete_after=5
+        )
+
+    except discord.Forbidden:
+
+        await ctx.send(
+            "❌ بۆتەکە دەسەڵاتی دەستکاری Role ـەکەی نییە.",
+            delete_after=5
+        )
 
 
 # =========================================================
-# COMMAND ERRORS
+# COMMAND ERROR HANDLER
 # =========================================================
 
 @bot.event
 async def on_command_error(
-    ctx,
+    ctx: commands.Context,
     error
 ):
+
+    if isinstance(
+        error,
+        commands.CommandNotFound
+    ):
+        return
 
     if isinstance(
         error,
@@ -1096,45 +1288,77 @@ async def on_command_error(
     ):
 
         await ctx.send(
-            "❌ تۆ دەسەڵاتی بەکارهێنانی ئەم فرمانە نییە.",
-            delete_after=4
+            "❌ تۆ دەسەڵاتی ئەم فرمانەت نییە.",
+            delete_after=5
         )
 
-    elif isinstance(
+        return
+
+    if isinstance(
         error,
         commands.MissingRequiredArgument
     ):
 
         await ctx.send(
-            "❌ Argument ـی پێویست نەدراوە.",
-            delete_after=4
+            "❌ هەموو زانیارییە پێویستەکان بنووسە.",
+            delete_after=5
         )
 
-    elif isinstance(
+        return
+
+    if isinstance(
         error,
         commands.MemberNotFound
     ):
 
         await ctx.send(
-            "❌ ئەو ئەندامە نەدۆزرایەوە.",
-            delete_after=4
+            "❌ ئەو کەسە نەدۆزرایەوە.",
+            delete_after=5
         )
 
-    elif isinstance(
+        return
+
+    if isinstance(
         error,
         commands.BadArgument
     ):
 
         await ctx.send(
-            "❌ داتای هەڵە نووسراوە.",
-            delete_after=4
+            "❌ Argument ـەکە هەڵەیە.",
+            delete_after=5
         )
+
+        return
+
+    if isinstance(
+        error,
+        discord.Forbidden
+    ):
+
+        await ctx.send(
+            "❌ بۆتەکە دەسەڵاتی پێویستی نییە.",
+            delete_after=5
+        )
+
+        return
+
+    print(
+        f"Command error: {error}"
+    )
 
 
 # =========================================================
 # RUN BOT
 # =========================================================
 
-bot.run(
-    os.getenv("DISCORD_TOKEN")
+TOKEN = os.getenv(
+    "DISCORD_TOKEN"
 )
+
+if not TOKEN:
+
+    raise RuntimeError(
+        "DISCORD_TOKEN environment variable is missing."
+    )
+
+bot.run(TOKEN)
