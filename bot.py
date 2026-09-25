@@ -38,6 +38,8 @@ LOG_CHANNELS = {
     "ban": 1448989230524141599
 }
 
+MUTED_ROLE_NAME = "Muted"
+
 
 # =========================================================
 # 3. READY
@@ -215,7 +217,56 @@ async def get_target_member(message):
 
 
 # =========================================================
-# 8. MUTED ROLE - APPLY TO EVERY CHANNEL
+# 8. CREATE THE MUTED PERMISSION OVERWRITE
+# =========================================================
+
+def create_muted_overwrite():
+
+    overwrite = discord.PermissionOverwrite()
+
+    # =====================================================
+    # TEXT CHAT
+    # =====================================================
+
+    overwrite.send_messages = False
+
+    # =====================================================
+    # REACTIONS
+    # =====================================================
+
+    overwrite.add_reactions = False
+
+    # =====================================================
+    # THREADS
+    # =====================================================
+
+    overwrite.send_messages_in_threads = False
+
+    overwrite.create_public_threads = False
+
+    overwrite.create_private_threads = False
+
+    # =====================================================
+    # VOICE
+    # =====================================================
+
+    overwrite.speak = False
+
+    overwrite.stream = False
+
+    overwrite.use_voice_activation = False
+
+    # =====================================================
+    # STAGE
+    # =====================================================
+
+    overwrite.request_to_speak = False
+
+    return overwrite
+
+
+# =========================================================
+# 9. APPLY MUTED PERMISSIONS TO ONE CHANNEL
 # =========================================================
 
 async def apply_muted_permissions(
@@ -225,11 +276,11 @@ async def apply_muted_permissions(
 
     try:
 
-        # -----------------------------------------
-        # TEXT CHANNEL
-        # NEWS CHANNEL
-        # FORUM CHANNEL
-        # -----------------------------------------
+        overwrite = create_muted_overwrite()
+
+        # =================================================
+        # TEXT / NEWS / FORUM
+        # =================================================
 
         if isinstance(
             channel,
@@ -242,134 +293,211 @@ async def apply_muted_permissions(
 
             await channel.set_permissions(
                 mute_role,
-
-                send_messages=False,
-
-                add_reactions=False,
-
-                send_messages_in_threads=False,
-
-                create_public_threads=False,
-
-                create_private_threads=False,
-
-                embed_links=False,
-
-                attach_files=False,
-
-                use_external_emojis=False,
-
-                use_external_stickers=False,
-
+                overwrite=overwrite,
                 reason="Karezma Muted role"
             )
 
+            print(
+                f"✅ Muted applied to text channel: {channel.name}"
+            )
 
-        # -----------------------------------------
-        # VOICE CHANNEL
-        # -----------------------------------------
+            return
 
-        elif isinstance(
+
+        # =================================================
+        # VOICE
+        # =================================================
+
+        if isinstance(
             channel,
             discord.VoiceChannel
         ):
 
             await channel.set_permissions(
                 mute_role,
-
-                speak=False,
-
-                stream=False,
-
-                use_voice_activation=False,
-
+                overwrite=overwrite,
                 reason="Karezma Muted role"
             )
 
+            print(
+                f"✅ Muted applied to voice channel: {channel.name}"
+            )
 
-        # -----------------------------------------
-        # STAGE CHANNEL
-        # -----------------------------------------
+            return
 
-        elif isinstance(
+
+        # =================================================
+        # STAGE
+        # =================================================
+
+        if isinstance(
             channel,
             discord.StageChannel
         ):
 
             await channel.set_permissions(
                 mute_role,
-
-                speak=False,
-
-                stream=False,
-
+                overwrite=overwrite,
                 reason="Karezma Muted role"
             )
+
+            print(
+                f"✅ Muted applied to stage channel: {channel.name}"
+            )
+
+            return
+
+
+        # =================================================
+        # CATEGORY
+        # =================================================
+
+        if isinstance(
+            channel,
+            discord.CategoryChannel
+        ):
+
+            await channel.set_permissions(
+                mute_role,
+                overwrite=overwrite,
+                reason="Karezma Muted role"
+            )
+
+            print(
+                f"✅ Muted applied to category: {channel.name}"
+            )
+
+            return
 
 
     except discord.Forbidden:
 
         print(
-            f"Muted permission denied in: {channel.name}"
+            f"❌ Muted permission denied in: {channel.name}"
+        )
+
+    except discord.HTTPException as e:
+
+        print(
+            f"❌ Discord error in {channel.name}: {e}"
         )
 
     except Exception as e:
 
         print(
-            f"Muted permission error in {channel.name}: {e}"
+            f"❌ Muted permission error in {channel.name}: {e}"
         )
 
 
 # =========================================================
-# 9. GET OR CREATE MUTED ROLE
+# 10. APPLY MUTED TO EVERY CHANNEL
+# =========================================================
+
+async def apply_muted_to_all_channels(
+    guild,
+    mute_role
+):
+
+    print(
+        f"🔄 دەست پێکرد بە چێککردنی هەموو چەنالەکانی {guild.name}"
+    )
+
+    success = 0
+    failed = 0
+
+    # -----------------------------------------------------
+    # ALL GUILD CHANNELS
+    # -----------------------------------------------------
+
+    for channel in guild.channels:
+
+        try:
+
+            await apply_muted_permissions(
+                channel,
+                mute_role
+            )
+
+            success += 1
+
+        except Exception as e:
+
+            failed += 1
+
+            print(
+                f"❌ Channel error {channel.name}: {e}"
+            )
+
+    print(
+        f"✅ Muted permissions تەواوبوو | "
+        f"Success: {success} | Failed: {failed}"
+    )
+
+
+# =========================================================
+# 11. GET OR CREATE MUTED ROLE
 # =========================================================
 
 async def get_or_create_muted_role(guild):
 
+    # -----------------------------------------------------
+    # FIND EXISTING MUTED ROLE
+    # -----------------------------------------------------
+
     mute_role = discord.utils.get(
         guild.roles,
-        name="Muted"
+        name=MUTED_ROLE_NAME
     )
+
+    # -----------------------------------------------------
+    # CREATE IF NOT EXISTS
+    # -----------------------------------------------------
 
     if mute_role is None:
 
         try:
 
             mute_role = await guild.create_role(
-                name="Muted",
+                name=MUTED_ROLE_NAME,
                 reason="Karezma mute role"
             )
 
+            print(
+                f"✅ Muted role دروستکرا لە {guild.name}"
+            )
+
         except discord.Forbidden:
+
+            print(
+                "❌ Bot cannot create Muted role."
+            )
 
             return None
 
         except Exception as e:
 
             print(
-                f"Muted role creation error: {e}"
+                f"❌ Muted role creation error: {e}"
             )
 
             return None
 
 
-    # -----------------------------------------
-    # APPLY TO ALL CHANNELS EVERY TIME
-    # -----------------------------------------
+    # -----------------------------------------------------
+    # EVERY TIME MUTE IS USED:
+    # SCAN ALL CHANNELS AGAIN
+    # -----------------------------------------------------
 
-    for channel in guild.channels:
-
-        await apply_muted_permissions(
-            channel,
-            mute_role
-        )
-
+    await apply_muted_to_all_channels(
+        guild,
+        mute_role
+    )
 
     return mute_role
 
 
 # =========================================================
-# 10. NEW CHANNEL -> MUTED PERMISSION
+# 12. NEW CHANNEL -> AUTOMATICALLY APPLY MUTED
 # =========================================================
 
 @bot.event
@@ -379,7 +507,7 @@ async def on_guild_channel_create(channel):
 
         mute_role = discord.utils.get(
             channel.guild.roles,
-            name="Muted"
+            name=MUTED_ROLE_NAME
         )
 
         if mute_role is not None:
@@ -387,6 +515,11 @@ async def on_guild_channel_create(channel):
             await apply_muted_permissions(
                 channel,
                 mute_role
+            )
+
+            print(
+                f"✅ Muted permission بۆ چەنالی نوێ دانرا: "
+                f"{channel.name}"
             )
 
     except Exception as e:
@@ -407,7 +540,7 @@ async def on_guild_channel_create(channel):
 
 
 # =========================================================
-# 11. CHANNEL DELETE
+# 13. CHANNEL DELETE
 # =========================================================
 
 @bot.event
@@ -423,7 +556,7 @@ async def on_guild_channel_delete(channel):
 
 
 # =========================================================
-# 12. ROLE CREATE
+# 14. ROLE CREATE
 # =========================================================
 
 @bot.event
@@ -439,7 +572,7 @@ async def on_guild_role_create(role):
 
 
 # =========================================================
-# 13. ROLE DELETE
+# 15. ROLE DELETE
 # =========================================================
 
 @bot.event
@@ -455,7 +588,7 @@ async def on_guild_role_delete(role):
 
 
 # =========================================================
-# 14. ROLE UPDATE
+# 16. ROLE UPDATE
 # =========================================================
 
 @bot.event
@@ -489,7 +622,6 @@ async def on_guild_role_update(
     if not changes:
         return
 
-
     await send_log(
         after.guild,
         "edit_role",
@@ -500,7 +632,7 @@ async def on_guild_role_update(
 
 
 # =========================================================
-# 15. ROLE ADD / REMOVE
+# 17. ROLE ADD / REMOVE
 # =========================================================
 
 @bot.event
@@ -522,17 +654,16 @@ async def on_member_update(
     removed_roles = before_roles - after_roles
 
 
-    # -----------------------------------------
+    # -----------------------------------------------------
     # ROLE ADDED
-    # -----------------------------------------
+    # -----------------------------------------------------
 
     for role in added_roles:
 
         if role.is_default():
             continue
 
-        if role.name == "Muted":
-
+        if role.name == MUTED_ROLE_NAME:
             continue
 
         await send_log(
@@ -545,17 +676,16 @@ async def on_member_update(
         )
 
 
-    # -----------------------------------------
+    # -----------------------------------------------------
     # ROLE REMOVED
-    # -----------------------------------------
+    # -----------------------------------------------------
 
     for role in removed_roles:
 
         if role.is_default():
             continue
 
-        if role.name == "Muted":
-
+        if role.name == MUTED_ROLE_NAME:
             continue
 
         await send_log(
@@ -569,7 +699,7 @@ async def on_member_update(
 
 
 # =========================================================
-# 16. VOICE LOG
+# 18. VOICE LOG
 # =========================================================
 
 @bot.event
@@ -583,7 +713,10 @@ async def on_voice_state_update(
         return
 
 
+    # -----------------------------------------------------
     # JOIN
+    # -----------------------------------------------------
+
     if (
         before.channel is None
         and after.channel is not None
@@ -600,7 +733,10 @@ async def on_voice_state_update(
         return
 
 
+    # -----------------------------------------------------
     # LEAVE
+    # -----------------------------------------------------
+
     if (
         before.channel is not None
         and after.channel is None
@@ -617,7 +753,10 @@ async def on_voice_state_update(
         return
 
 
+    # -----------------------------------------------------
     # MOVE
+    # -----------------------------------------------------
+
     if (
         before.channel is not None
         and after.channel is not None
@@ -635,7 +774,7 @@ async def on_voice_state_update(
 
 
 # =========================================================
-# 17. MESSAGE DELETE LOG
+# 19. MESSAGE DELETE LOG
 # =========================================================
 
 @bot.event
@@ -659,10 +798,6 @@ async def on_message_delete(message):
 
     deleter = None
 
-
-    # -----------------------------------------
-    # TRY TO FIND WHO DELETED IT
-    # -----------------------------------------
 
     try:
 
@@ -718,7 +853,7 @@ async def on_message_delete(message):
 
 
 # =========================================================
-# 18. MAIN COMMAND SYSTEM
+# 20. MAIN COMMAND SYSTEM
 # =========================================================
 
 @bot.event
@@ -739,9 +874,9 @@ async def on_message(message):
 
     parts = content.split()
 
-    # -----------------------------------------
-    # CAPITAL / SMALL FIX
-    # -----------------------------------------
+    # -----------------------------------------------------
+    # CASE INSENSITIVE
+    # -----------------------------------------------------
 
     command = parts[0].lower()
 
@@ -874,10 +1009,29 @@ async def on_message(message):
             return
 
 
-        if (
-            target.top_role
-            >= message.guild.me.top_role
-        ):
+        if target.id == message.guild.owner_id:
+
+            await message.channel.send(
+                "❌ ناتوانرێت خاوەنی سێرڤەر Mute بکرێت.",
+                delete_after=5
+            )
+
+            return
+
+
+        me = message.guild.me
+
+        if me is None:
+
+            await message.channel.send(
+                "❌ بۆتەکە ناتوانێت زانیاری ڕۆڵەکەی بدۆزێتەوە.",
+                delete_after=5
+            )
+
+            return
+
+
+        if target.top_role >= me.top_role:
 
             await message.channel.send(
                 "❌ ڕۆڵی ئەو کەسە لە ڕۆڵی بۆتەکە بەرزترە یان یەکسانە.",
@@ -889,9 +1043,10 @@ async def on_message(message):
 
         try:
 
-            # -----------------------------------------
-            # GET / CREATE MUTED ROLE
-            # -----------------------------------------
+            # =================================================
+            # FIND / CREATE MUTED ROLE
+            # AND APPLY TO ALL CHANNELS
+            # =================================================
 
             mute_role = await get_or_create_muted_role(
                 message.guild
@@ -908,14 +1063,11 @@ async def on_message(message):
                 return
 
 
-            # -----------------------------------------
-            # ROLE HIERARCHY
-            # -----------------------------------------
+            # =================================================
+            # CHECK ROLE HIERARCHY
+            # =================================================
 
-            if (
-                mute_role
-                >= message.guild.me.top_role
-            ):
+            if mute_role >= me.top_role:
 
                 await message.channel.send(
                     "❌ ڕۆڵی `Muted` دەبێت لە خوار ڕۆڵی بۆتەکە بێت.",
@@ -925,9 +1077,9 @@ async def on_message(message):
                 return
 
 
-            # -----------------------------------------
+            # =================================================
             # ADD MUTED ROLE
-            # -----------------------------------------
+            # =================================================
 
             if mute_role not in target.roles:
 
@@ -937,9 +1089,9 @@ async def on_message(message):
                 )
 
 
-            # -----------------------------------------
+            # =================================================
             # DELETE COMMAND
-            # -----------------------------------------
+            # =================================================
 
             try:
 
@@ -950,19 +1102,19 @@ async def on_message(message):
                 pass
 
 
-            # -----------------------------------------
-            # REQUIRED MESSAGE
-            # -----------------------------------------
+            # =================================================
+            # MUTE MESSAGE
+            # =================================================
 
             await message.channel.send(
-                f"damt daxaa {target.mention}",
+                f"mute kra {target.mention}",
                 delete_after=2
             )
 
 
-            # -----------------------------------------
+            # =================================================
             # MUTE LOG
-            # -----------------------------------------
+            # =================================================
 
             await send_log(
                 message.guild,
@@ -1032,7 +1184,7 @@ async def on_message(message):
 
             mute_role = discord.utils.get(
                 message.guild.roles,
-                name="Muted"
+                name=MUTED_ROLE_NAME
             )
 
 
@@ -1063,15 +1215,19 @@ async def on_message(message):
                 pass
 
 
+            # =================================================
+            # UNMUTE MESSAGE
+            # =================================================
+
             await message.channel.send(
-                f"xwa xerm bnwse dllm basha aqllba amjara {target.mention}",
+                f"unmute kraa {target.mention}",
                 delete_after=2
             )
 
 
-            # -----------------------------------------
+            # =================================================
             # UNMUTE LOG
-            # -----------------------------------------
+            # =================================================
 
             await send_log(
                 message.guild,
@@ -1146,10 +1302,7 @@ async def on_message(message):
             return
 
 
-        if (
-            target.top_role
-            >= message.guild.me.top_role
-        ):
+        if target.top_role >= message.guild.me.top_role:
 
             await message.channel.send(
                 "❌ ڕۆڵی ئەو کەسە لە ڕۆڵی بۆتەکە بەرزترە یان یەکسانە.",
@@ -1175,19 +1328,11 @@ async def on_message(message):
                 pass
 
 
-            # -----------------------------------------
-            # REQUIRED MESSAGE
-            # -----------------------------------------
-
             await message.channel.send(
                 f"Frenraa✈️ {target.mention}",
                 delete_after=2
             )
 
-
-            # -----------------------------------------
-            # BFRA LOG
-            # -----------------------------------------
 
             await send_log(
                 message.guild,
@@ -1304,10 +1449,6 @@ async def on_message(message):
                 delete_after=3
             )
 
-
-            # -----------------------------------------
-            # UNBAN LOG
-            # -----------------------------------------
 
             await send_log(
                 message.guild,
@@ -1466,7 +1607,7 @@ async def on_message(message):
 
 
 # =========================================================
-# 19. ERROR HANDLER
+# 21. ERROR HANDLER
 # =========================================================
 
 @bot.event
@@ -1492,7 +1633,7 @@ async def on_command_error(
 
 
 # =========================================================
-# 20. RUN BOT
+# 22. RUN BOT
 # =========================================================
 
 TOKEN = os.getenv(
