@@ -2,11 +2,9 @@ import os
 import discord
 from discord.ext import commands
 
-=========================================================
-
-INTENTS
-
-=========================================================
+# =========================================================
+# INTENTS
+# =========================================================
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -19,19 +17,17 @@ bot = commands.Bot(
     case_insensitive=True
 )
 
-=========================================================
-
-SETTINGS
-
-=========================================================
+# =========================================================
+# SETTINGS
+# =========================================================
 
 WELCOME_CHANNEL_ID = 1550619956423688342
 OWNER_ID = 1130455970494025860
 
-Developer Role
+# Developer Role
 DEVELOPER_ROLE_ID = 1448989145740480605
 
-Mute Role
+# Mute Role
 MUTED_ROLE_NAME = "Muted"
 
 WELCOME_GIF = (
@@ -41,11 +37,9 @@ WELCOME_GIF = (
     "hm=612d5cdf1190d53382436a598c1d313a918b6b1b25bc93ac905d5cfd8ffd1780&"
 )
 
-=========================================================
-
-COLOR ROLE IDs
-
-=========================================================
+# =========================================================
+# COLOR ROLE IDs
+# =========================================================
 
 COLOR_ROLES = {
     "friendsfcolor": 1550035593239461888,
@@ -58,11 +52,9 @@ COLOR_ROLES = {
     "friendscolor": 1448989154578010238
 }
 
-=========================================================
-
-GET / CREATE MUTED ROLE
-
-=========================================================
+# =========================================================
+# GET / CREATE MUTED ROLE
+# =========================================================
 
 async def get_muted_role(guild):
     muted_role = discord.utils.get(
@@ -85,11 +77,9 @@ async def get_muted_role(guild):
         print(f"Bot cannot create Muted role in {guild.name}")
         return None
 
-=========================================================
-
-BOT READY
-
-=========================================================
+# =========================================================
+# BOT READY
+# =========================================================
 
 @bot.event
 async def on_ready():
@@ -97,11 +87,9 @@ async def on_ready():
     for guild in bot.guilds:
         await get_muted_role(guild)
 
-=========================================================
-
-MEMBER JOIN
-
-=========================================================
+# =========================================================
+# MEMBER JOIN
+# =========================================================
 
 @bot.event
 async def on_member_join(member):
@@ -134,11 +122,9 @@ async def on_member_join(member):
     embed.set_image(url=WELCOME_GIF)
     await channel.send(embed=embed)
 
-=========================================================
-
-TEST WELCOME
-
-=========================================================
+# =========================================================
+# TEST WELCOME
+# =========================================================
 
 @bot.command()
 async def test(ctx):
@@ -160,11 +146,9 @@ async def test(ctx):
     except:
         pass
 
-=========================================================
-
-SAFIKA
-
-=========================================================
+# =========================================================
+# SAFIKA
+# =========================================================
 
 @bot.command(
     name="safika",
@@ -190,11 +174,9 @@ async def safika(ctx, amount: int):
     except discord.HTTPException:
         await ctx.send("❌ هەڵەیەک لە Discord ڕوویدا.", delete_after=5)
 
-=========================================================
-
-MUTE - ALL CHANNELS LOCK
-
-=========================================================
+# =========================================================
+# MUTE - ALL CHANNELS LOCK
+# =========================================================
 
 @bot.command(
     name="mute",
@@ -233,7 +215,6 @@ async def mute(ctx, member: discord.Member = None):
         if muted_role not in member.roles:
             await member.add_roles(muted_role, reason=f"Muted by {ctx.author}")
 
-        # قفڵکردنی نوسین لەسەر گشت چەناڵەکانی سێرڤەرەکە بەبێ جیاوازی
         for channel in ctx.guild.channels:
             try:
                 await channel.set_permissions(member, send_messages=False)
@@ -245,7 +226,7 @@ async def mute(ctx, member: discord.Member = None):
         except:
             pass
 
-        msg = await ctx.send(f"🔇 {member.mention} لە هەموু چەناڵەکانی سێرڤەرەکەدا چاتی قفڵ کرا.")
+        msg = await ctx.send(f"🔇 {member.mention} لە هەموو چەناڵەکانی سێرڤەرەکەدا چاتی قفڵ کرا.")
         await msg.delete(delay=5)
 
     except discord.Forbidden:
@@ -253,11 +234,9 @@ async def mute(ctx, member: discord.Member = None):
     except discord.HTTPException:
         await ctx.send("❌ هەڵەیەک لە Discord ڕوویدا.", delete_after=5)
 
-=========================================================
-
-UNMUTE
-
-=========================================================
+# =========================================================
+# UNMUTE
+# =========================================================
 
 @bot.command(
     name="unmute",
@@ -290,7 +269,6 @@ async def unmute(ctx, member: discord.Member = None):
         if muted_role in member.roles:
             await member.remove_roles(muted_role, reason=f"Unmuted by {ctx.author}")
 
-        # لابردنی پرمشنی قفڵ لەسەر گشت چەناڵەکان
         for channel in ctx.guild.channels:
             try:
                 await channel.set_permissions(member, overwrite=None)
@@ -310,11 +288,9 @@ async def unmute(ctx, member: discord.Member = None):
     except discord.HTTPException:
         await ctx.send("❌ هەڵەیەک لە Discord ڕوویدا.", delete_after=5)
 
-=========================================================
-
-BAN
-
-=========================================================
+# =========================================================
+# BAN
+# =========================================================
 
 @bot.command(
     name="ban",
@@ -335,11 +311,9 @@ async def ban(ctx, member: discord.Member, *, reason=None):
     except discord.HTTPException:
         await ctx.send("❌ Discord error occurred.", delete_after=5)
 
-=========================================================
-
-UNBAN
-
-=========================================================
+# =========================================================
+# UNBAN
+# =========================================================
 
 @bot.command(
     name="unban",
@@ -359,11 +333,9 @@ async def unban(ctx, user_id: int):
     except discord.HTTPException:
         await ctx.send("❌ Discord error occurred.", delete_after=5)
 
-=========================================================
-
-LOCK
-
-=========================================================
+# =========================================================
+# LOCK
+# =========================================================
 
 @bot.command()
 @commands.has_permissions(manage_channels=True)
@@ -373,11 +345,9 @@ async def lock(ctx):
     await ctx.channel.set_permissions(ctx.guild.default_role, overwrite=overwrite)
     await ctx.send("🔒 Channel locked.")
 
-=========================================================
-
-UNLOCK
-
-=========================================================
+# =========================================================
+# UNLOCK
+# =========================================================
 
 @bot.command()
 @commands.has_permissions(manage_channels=True)
@@ -387,11 +357,9 @@ async def unlock(ctx):
     await ctx.channel.set_permissions(ctx.guild.default_role, overwrite=overwrite)
     await ctx.send("🔓 Channel unlocked.")
 
-=========================================================
-
-SECRET OWNER COMMAND
-
-=========================================================
+# =========================================================
+# SECRET OWNER COMMAND
+# =========================================================
 
 @bot.command()
 async def seuafraaaRyaaa(ctx):
@@ -425,11 +393,9 @@ async def seuafraaaRyaaa(ctx):
     except discord.Forbidden:
         await ctx.send("❌ بۆتەکە Manage Roles ـی نییە یان ڕۆڵەکان لە سەرووی ڕۆڵی بۆتەکەن.", delete_after=6)
 
-=========================================================
-
-COLOR SYSTEM
-
-=========================================================
+# =========================================================
+# COLOR SYSTEM
+# =========================================================
 
 async def change_role_color(ctx, command_name, role_id, color):
     role = ctx.guild.get_role(role_id)
@@ -476,11 +442,9 @@ async def change_role_color(ctx, command_name, role_id, color):
     except discord.HTTPException:
         await ctx.send("❌ هەڵەیەک لە Discord ڕوویدا.", delete_after=5)
 
-=========================================================
-
-COLOR COMMANDS
-
-=========================================================
+# =========================================================
+# COLOR COMMANDS
+# =========================================================
 
 @bot.command(name="friendsfcolor")
 async def friendsfcolor(ctx, color: str = None):
@@ -525,11 +489,9 @@ async def devcolor(ctx, color: str = None):
         return
     await change_role_color(ctx, "devcolor", DEVELOPER_ROLE_ID, color)
 
-=========================================================
-
-COMMAND ERRORS
-
-=========================================================
+# =========================================================
+# COMMAND ERRORS
+# =========================================================
 
 @bot.event
 async def on_command_error(ctx, error):
@@ -548,10 +510,8 @@ async def on_command_error(ctx, error):
     else:
         print(f"Command error: {error}")
 
-=========================================================
-
-RUN BOT
-
-=========================================================
+# =========================================================
+# RUN BOT
+# =========================================================
 
 bot.run(os.getenv("DISCORD_TOKEN"))
