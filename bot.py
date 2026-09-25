@@ -150,10 +150,7 @@ async def test(ctx):
 # SAFIKA
 # =========================================================
 
-@bot.command(
-    name="safika",
-    aliases=["SAFIKA", "Safika", "sAfika", "saFika", "SAfika", "sAFika", "saFIka", "SAFika"]
-)
+@bot.command(name="safika")
 @commands.has_permissions(manage_messages=True)
 async def safika(ctx, amount: int):
     if amount <= 0:
@@ -178,10 +175,7 @@ async def safika(ctx, amount: int):
 # MUTE - ALL CHANNELS LOCK
 # =========================================================
 
-@bot.command(
-    name="mute",
-    aliases=["MUTE", "Mute", "mUte", "muTe", "mutE"]
-)
+@bot.command(name="mute")
 @commands.has_permissions(manage_roles=True)
 async def mute(ctx, member: discord.Member = None):
     if member is None and ctx.message.reference:
@@ -238,10 +232,7 @@ async def mute(ctx, member: discord.Member = None):
 # UNMUTE
 # =========================================================
 
-@bot.command(
-    name="unmute",
-    aliases=["UNMUTE", "Unmute", "uNmute", "unMute", "unmutE"]
-)
+@bot.command(name="unmute")
 @commands.has_permissions(manage_roles=True)
 async def unmute(ctx, member: discord.Member = None):
     if member is None and ctx.message.reference:
@@ -292,10 +283,7 @@ async def unmute(ctx, member: discord.Member = None):
 # BAN
 # =========================================================
 
-@bot.command(
-    name="ban",
-    aliases=["BAN", "Ban", "bAn", "baN"]
-)
+@bot.command(name="ban")
 @commands.has_permissions(ban_members=True)
 async def ban(ctx, member: discord.Member, *, reason=None):
     try:
@@ -315,10 +303,7 @@ async def ban(ctx, member: discord.Member, *, reason=None):
 # UNBAN
 # =========================================================
 
-@bot.command(
-    name="unban",
-    aliases=["UNBAN", "Unban", "uNbAn"]
-)
+@bot.command(name="unban")
 @commands.has_permissions(ban_members=True)
 async def unban(ctx, user_id: int):
     try:
